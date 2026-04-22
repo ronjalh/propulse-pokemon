@@ -20,4 +20,9 @@ Turn the static `src/lib/data/roster.json` into rows in the `persons` table. Ide
   - Missing LinkedIn URLs stored as `null`
 
 ## Status
-- [ ] Not started
+- [x] `scripts/seed-roster.ts` written — 2026-04-22
+- [x] `src/lib/data/base-stats.ts` with per-discipline base stats + rarity rules
+- [x] Dedupe rule: Mentors (pri 1) > Board (pri 2) > others. Handles Milton Heen, Jakob Ip (→Board), Ola Vanni Flaata (→Mentors)
+- [x] 91 flat entries → 88 unique persons upserted into Neon
+- [x] Distribution verified: Board 6, Propulsion 11, Mechanical 15, Marketing 7, IT 6, Business 3, Software 12, Electrical 10, Mentors 18
+- [x] Spot-checked: Ronja → IT/Dark/rare, Simen Fritsvold → IT/Developer/Dark-Ghost/common, Ola → Mentors/Dragon/legendary
