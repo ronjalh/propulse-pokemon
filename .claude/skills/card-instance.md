@@ -28,4 +28,7 @@ A `card` row is one pulled copy of a Person. Stats are seeded deterministically 
 - Stats are derived, not stored. Only IVs persist. This guarantees future balancing tweaks affect existing cards.
 
 ## Status
-- [ ] Not started
+- [x] `cards` table added to schema with indexes on owner_id and person_id
+- [x] Migration `drizzle/0001_curious_phantom_reporter.sql` applied
+- [x] Types `Card`, `NewCard`, `IVs` exported from schema
+- [x] `computeFinalStats` in stats.ts composes base + IVs + shiny multiplier

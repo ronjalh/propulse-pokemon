@@ -18,4 +18,7 @@ Every pulled card rolls a low-probability shiny chance. A shiny is called a "Fem
 - Visual treatment in `PropulseCard` (holo gradient, "Feminist" name prefix, glowing border)
 
 ## Status
-- [ ] Not started
+- [x] `rollShiny(cardId, rate=64)` in stats.ts
+- [x] `isShiny` persisted on card row
+- [x] `computeFinalStats` applies 1.1× when shiny
+- [x] `PropulseCard` renders "Feminist" prefix, pink ring, holo overlay when shiny

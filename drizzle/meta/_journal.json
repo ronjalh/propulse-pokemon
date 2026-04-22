@@ -8,6 +8,13 @@
       "when": 1776882743608,
       "tag": "0000_pretty_secret_warriors",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776885440994,
+      "tag": "0001_curious_phantom_reporter",
+      "breakpoints": true
     }
   ]
 }

@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   text,
@@ -8,6 +9,7 @@ import {
   jsonb,
   pgEnum,
   uuid,
+  index,
 } from "drizzle-orm/pg-core";
 
 // ─────────────────────────────────────────────────────────────
@@ -136,6 +138,45 @@ export const persons = pgTable("persons", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// ─────────────────────────────────────────────────────────────
+// Cards — each pulled copy of a Person
+// ─────────────────────────────────────────────────────────────
+
+export type IVs = {
+  hp: number;
+  attack: number;
+  defense: number;
+  spAttack: number;
+  spDefense: number;
+  speed: number;
+};
+
+export const cards = pgTable(
+  "cards",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    personId: uuid("person_id")
+      .notNull()
+      .references(() => persons.id, { onDelete: "restrict" }),
+    ownerId: text("owner_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    isShiny: boolean("is_shiny").notNull().default(false),
+    ivs: jsonb("ivs").$type<IVs>().notNull(),
+    moveIds: jsonb("move_ids")
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    pulledAt: timestamp("pulled_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("cards_owner_idx").on(t.ownerId),
+    index("cards_person_idx").on(t.personId),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type Person = typeof persons.$inferSelect;
 export type NewPerson = typeof persons.$inferInsert;
+export type Card = typeof cards.$inferSelect;
+export type NewCard = typeof cards.$inferInsert;

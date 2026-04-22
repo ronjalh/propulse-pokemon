@@ -19,4 +19,4 @@ Given a card's uuid, produce deterministic IVs for all six stats. Same uuid alwa
 - Property test: 10k random uuids produce IVs with mean ≈ 16 and uniform distribution
 
 ## Status
-- [ ] Not started
+- [x] `src/lib/cards/stats.ts` — FNV-1a hash, generateIVs (0–31), rollShiny (1/64), computeFinalStats (level-50 classic formula, +10% when shiny) — 2026-04-22

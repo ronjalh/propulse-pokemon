@@ -1,0 +1,128 @@
+import Image from "next/image";
+import type { Card, Person, BaseStats, IVs } from "@/lib/db/schema";
+import { computeFinalStats } from "@/lib/cards/stats";
+import { TYPE_COLORS, rarityBorderClass } from "@/lib/design/type-colors";
+import { cn } from "@/lib/utils";
+
+type Size = "sm" | "md" | "lg";
+
+type Props = {
+  card: Pick<Card, "id" | "isShiny" | "ivs">;
+  person: Pick<
+    Person,
+    | "name"
+    | "title"
+    | "imageUrl"
+    | "discipline"
+    | "subDiscipline"
+    | "primaryType"
+    | "secondaryType"
+    | "baseStats"
+    | "rarity"
+  >;
+  size?: Size;
+};
+
+const SIZE_CLASSES: Record<Size, string> = {
+  sm: "w-40 h-60 text-xs",
+  md: "w-60 h-[23rem] text-sm",
+  lg: "w-80 h-[31rem] text-base",
+};
+
+function StatRow({ label, value, max = 200 }: { label: string; value: number; max?: number }) {
+  const pct = Math.min(100, (value / max) * 100);
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-12 text-[0.65rem] uppercase tracking-wide opacity-80">
+        {label}
+      </span>
+      <div className="flex-1 h-1.5 bg-black/20 rounded-full overflow-hidden">
+        <div className="h-full bg-white/80" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="w-8 text-right tabular-nums text-[0.7rem]">{value}</span>
+    </div>
+  );
+}
+
+export function PropulseCard({ card, person, size = "md" }: Props) {
+  const primary = TYPE_COLORS[person.primaryType];
+  const secondary = person.secondaryType ? TYPE_COLORS[person.secondaryType] : primary;
+  const final = computeFinalStats(person.baseStats as BaseStats, card.ivs as IVs, card.isShiny);
+
+  const gradient = `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`;
+  const shiny = card.isShiny;
+  const displayName = shiny ? `Feminist ${person.name}` : person.name;
+
+  return (
+    <div
+      className={cn(
+        "relative rounded-2xl border-2 overflow-hidden shadow-lg text-white flex flex-col",
+        SIZE_CLASSES[size],
+        rarityBorderClass(person.rarity),
+        shiny && "ring-2 ring-pink-400/70 shadow-pink-500/40",
+      )}
+      style={{ background: gradient }}
+    >
+      {shiny && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-30 mix-blend-overlay"
+          style={{
+            background:
+              "linear-gradient(125deg, transparent 30%, white 50%, transparent 70%)",
+          }}
+        />
+      )}
+
+      {/* header */}
+      <div className="flex items-start justify-between px-3 pt-2">
+        <div className="min-w-0">
+          <div className="font-bold leading-tight truncate">{displayName}</div>
+          <div className="text-[0.65rem] opacity-80 leading-tight truncate">
+            {person.title}
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-0.5 shrink-0 ml-2">
+          <span className="px-1.5 py-0.5 rounded bg-black/30 text-[0.65rem] font-semibold">
+            {person.primaryType}
+          </span>
+          {person.secondaryType && (
+            <span className="px-1.5 py-0.5 rounded bg-black/30 text-[0.65rem] font-semibold">
+              {person.secondaryType}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* image */}
+      <div className="relative mx-3 mt-2 aspect-square rounded-lg overflow-hidden bg-white/10 ring-1 ring-white/20">
+        <Image
+          src={person.imageUrl}
+          alt={person.name}
+          fill
+          sizes="240px"
+          className="object-cover"
+        />
+      </div>
+
+      {/* stats */}
+      <div className="px-3 pt-2 space-y-1">
+        <StatRow label="HP" value={final.hp} max={220} />
+        <StatRow label="ATK" value={final.attack} max={180} />
+        <StatRow label="DEF" value={final.defense} max={180} />
+        <StatRow label="SpA" value={final.spAttack} max={180} />
+        <StatRow label="SpD" value={final.spDefense} max={180} />
+        <StatRow label="SPD" value={final.speed} max={180} />
+      </div>
+
+      {/* footer */}
+      <div className="mt-auto px-3 pb-2 pt-1 flex items-center justify-between text-[0.65rem] opacity-90">
+        <span className="uppercase tracking-wide">
+          {person.discipline}
+          {person.subDiscipline ? ` · ${person.subDiscipline}` : ""}
+        </span>
+        <span className="uppercase font-semibold">{person.rarity}</span>
+      </div>
+    </div>
+  );
+}

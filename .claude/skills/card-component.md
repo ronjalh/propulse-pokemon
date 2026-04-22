@@ -19,4 +19,5 @@ The visual card — used in collection views, pack-opening, battle, trade previe
 - Storybook-like example page at `src/app/(dev)/card-preview/page.tsx` (optional, dev-only)
 
 ## Status
-- [ ] Not started
+- [x] `src/components/card/PropulseCard.tsx` — sm/md/lg variants, type gradient, rarity border ring, shiny "Feminist" prefix + holo overlay + pink ring — 2026-04-22
+- [x] `src/lib/design/type-colors.ts` — classic Pokémon palette for all 18 types
