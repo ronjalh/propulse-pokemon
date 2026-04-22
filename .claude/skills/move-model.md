@@ -25,4 +25,5 @@ Store all moves as DB rows so they can be queried by type, attached to cards, an
   - `flavor` (text)
 
 ## Status
-- [ ] Not started
+- [x] `moves` table + `move_category` enum added to `src/lib/db/schema.ts`; migration `0002_lethal_tigra.sql` applied to Neon — 2026-04-22
+- [x] Types `Move`, `NewMove`, `MoveCategory` exported

@@ -48,14 +48,12 @@ export default async function PackResultPage({ searchParams }: PageProps) {
       <PackReveal pairs={ordered} />
 
       <div className="flex gap-3 justify-center">
-        <Button asChild>
-          <Link href="/packs">Open another</Link>
+        <Button render={<Link href="/packs" />}>Open another</Button>
+        <Button render={<Link href="/pokedex" />} variant="outline">
+          View Pokédex
         </Button>
-        <Button asChild variant="outline">
-          <Link href="/pokedex">View Pokédex</Link>
-        </Button>
-        <Button asChild variant="ghost">
-          <Link href="/">Home</Link>
+        <Button render={<Link href="/" />} variant="ghost">
+          Home
         </Button>
       </div>
     </main>

@@ -175,8 +175,38 @@ export const cards = pgTable(
   ],
 );
 
+// ─────────────────────────────────────────────────────────────
+// Moves — hardcoded move catalog (slugged, edited via admin panel)
+// ─────────────────────────────────────────────────────────────
+
+export const moveCategoryEnum = pgEnum("move_category", [
+  "physical",
+  "special",
+  "status",
+]);
+
+export const moves = pgTable(
+  "moves",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    type: pokemonTypeEnum("type").notNull(),
+    category: moveCategoryEnum("category").notNull(),
+    power: integer("power"),
+    accuracy: integer("accuracy").notNull(),
+    pp: integer("pp").notNull(),
+    priority: integer("priority").notNull().default(0),
+    effect: text("effect"),
+    flavor: text("flavor").notNull(),
+  },
+  (t) => [index("moves_type_idx").on(t.type)],
+);
+
 export type User = typeof users.$inferSelect;
 export type Person = typeof persons.$inferSelect;
 export type NewPerson = typeof persons.$inferInsert;
 export type Card = typeof cards.$inferSelect;
 export type NewCard = typeof cards.$inferInsert;
+export type Move = typeof moves.$inferSelect;
+export type NewMove = typeof moves.$inferInsert;
+export type MoveCategory = (typeof moveCategoryEnum.enumValues)[number];
