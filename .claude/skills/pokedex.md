@@ -19,4 +19,7 @@ Grid view of all 88 Persons. Each shows as owned (full card), seen (battled agai
 - `/pokedex/[personId]` detail page with lore (title, discipline, base stats, learnset)
 
 ## Status
-- [ ] Not started
+- [x] `src/app/pokedex/page.tsx` — grid of all 88, owned vs silhouette states, shiny ring indicator, count badge for duplicates — 2026-04-22
+- [ ] Filter by discipline/type/rarity (v2)
+- [ ] Person detail `/pokedex/[id]` (v2)
+- [ ] "Seen but not owned" state (requires battle-history integration)

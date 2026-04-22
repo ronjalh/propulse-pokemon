@@ -19,4 +19,6 @@ The dopamine hit. Tear the pack, reveal cards one-by-one with rarity-appropriate
 - Skip button bulk-reveals remaining cards
 
 ## Status
-- [ ] Not started
+- [x] `src/app/packs/page.tsx` — pack chooser with credit check
+- [x] `src/app/packs/result/page.tsx` + `PackReveal.tsx` — staggered spring reveal via Framer Motion, shiny banner — 2026-04-22
+- [ ] Tap-to-flip per card (v2 polish)

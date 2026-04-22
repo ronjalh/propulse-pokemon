@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import Image from "next/image";
-import { auth, signOut } from "@/auth";
+import { auth } from "@/auth";
+import { signOutAction } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db/client";
 import { cards, persons } from "@/lib/db/schema";
@@ -45,12 +46,7 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
-        <form
-          action={async () => {
-            "use server";
-            await signOut({ redirectTo: "/signin" });
-          }}
-        >
+        <form action={signOutAction}>
           <Button type="submit" variant="ghost" size="sm">
             Sign out
           </Button>

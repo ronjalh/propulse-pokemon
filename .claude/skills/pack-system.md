@@ -25,4 +25,6 @@ Four pack flavors. Each pack pulls 5 cards following rarity weights; at least on
 - Anti-cheat: algorithm deterministic per request (logged) but seed derived server-side
 
 ## Status
-- [ ] Not started
+- [x] `src/lib/packs/types.ts` — PackConfig for base/premium/mentor
+- [x] `src/lib/packs/actions.ts` — `openPackAction` with atomic credit debit, weighted rarity roll, first-card rare+ guarantee — 2026-04-22
+- [ ] Daily free-pack mechanic (deferred to `daily-rewards` skill)
