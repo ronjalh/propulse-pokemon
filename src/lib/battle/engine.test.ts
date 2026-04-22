@@ -151,6 +151,19 @@ describe("computeDamage", () => {
     expect(r.damage).toBeGreaterThanOrEqual(1);
   });
 
+  it("applies a 0.85× damage multiplier to TM-learned moves", () => {
+    const atk = mkCard({ cardId: "a", types: ["Normal"] });
+    const def = mkCard({ cardId: "b", types: ["Normal"] });
+    const move = mkMove({ id: "m", type: "Normal", category: "physical" });
+    const rngA = makeRng(100);
+    const rngB = makeRng(100);
+    const native = computeDamage(atk, def, move, rngA, false);
+    const tm = computeDamage(atk, def, move, rngB, true);
+    expect(tm.isTm).toBe(true);
+    expect(native.isTm).toBe(false);
+    expect(tm.damage).toBeLessThan(native.damage);
+  });
+
   it("produces deterministic damage for the same rng seed", () => {
     const atk = mkCard({ cardId: "a", types: ["Fire"] });
     const def = mkCard({ cardId: "b", types: ["Grass"] });

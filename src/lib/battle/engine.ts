@@ -11,20 +11,22 @@ import type {
 import { makeRng, type Rng } from "./rng";
 
 const CRIT_CHANCE = 1 / 24;
+const TM_DAMAGE_MULTIPLIER = 0.85;
 
 export function computeDamage(
   attacker: BattleCard,
   defender: BattleCard,
   move: Move,
   rng: Rng,
-): { damage: number; crit: boolean; effectiveness: number; stab: boolean } {
+  isTm = false,
+): { damage: number; crit: boolean; effectiveness: number; stab: boolean; isTm: boolean } {
   if (move.category === "status" || move.power == null) {
-    return { damage: 0, crit: false, effectiveness: 1, stab: false };
+    return { damage: 0, crit: false, effectiveness: 1, stab: false, isTm };
   }
 
   const effectiveness = typeMultiplier(move.type, defender.types);
   if (effectiveness === 0) {
-    return { damage: 0, crit: false, effectiveness: 0, stab: false };
+    return { damage: 0, crit: false, effectiveness: 0, stab: false, isTm };
   }
 
   const isPhysical = move.category === "physical";
@@ -37,6 +39,7 @@ export function computeDamage(
   const critMult = crit ? 1.5 : 1;
   const burnMult =
     attacker.status === "burn" && isPhysical ? 0.5 : 1;
+  const tmMult = isTm ? TM_DAMAGE_MULTIPLIER : 1;
   // Damage random roll 0.85..1.00 in 16 steps.
   const randomMult = 0.85 + rng.nextInt(16) / 100;
 
@@ -49,10 +52,10 @@ export function computeDamage(
 
   const damage = Math.max(
     1,
-    Math.floor(base * stabMult * effectiveness * critMult * burnMult * randomMult),
+    Math.floor(base * stabMult * effectiveness * critMult * burnMult * tmMult * randomMult),
   );
 
-  return { damage, crit, effectiveness, stab };
+  return { damage, crit, effectiveness, stab, isTm };
 }
 
 /** Apply a major status to a target. No-op if target already has one or is immune. */
@@ -224,7 +227,7 @@ function executeMoveIntent(
     return;
   }
 
-  const result = computeDamage(attacker, defender, move, rng);
+  const result = computeDamage(attacker, defender, move, rng, slot.isTm ?? false);
   if (result.effectiveness === 0) {
     events.push({ kind: "no-effect", actorId: attacker.cardId, moveId: move.id });
     return;

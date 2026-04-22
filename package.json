@@ -13,6 +13,7 @@
     "db:studio": "drizzle-kit studio",
     "seed:roster": "tsx --env-file=.env.local scripts/seed-roster.ts",
     "seed:moves": "tsx --env-file=.env.local scripts/seed-moves.ts",
+    "seed:learnsets": "tsx --env-file=.env.local scripts/seed-learnsets.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

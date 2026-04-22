@@ -171,6 +171,36 @@ export const MOVES: NewMove[] = [
 
 export const MOVES_BY_ID = new Map(MOVES.map((m) => [m.id, m]));
 
+// Universal TM pool — Normal-type moves learnable by any card regardless of type.
+// Used by `move-learning` to hand every Person a few TM slots.
+export const UNIVERSAL_TM_IDS = new Set<string>([
+  "tackle",
+  "quick_attack",
+  "swift",
+  "return",
+  "protect",
+  "substitute",
+  "rest",
+  "sleep_talk",
+  "facade",
+  "double_edge",
+  "giga_impact",
+  "hyper_beam",
+  "work_up",
+  "focus_energy",
+  "endure",
+  "body_slam",
+  "take_down",
+  "snore",
+  "hyper_voice",
+  "round",
+]);
+
 if (new Set(MOVES.map((m) => m.id)).size !== MOVES.length) {
   throw new Error("Duplicate move id in catalog");
+}
+for (const tmId of UNIVERSAL_TM_IDS) {
+  if (!MOVES_BY_ID.has(tmId)) {
+    throw new Error(`UNIVERSAL_TM_IDS references missing move: ${tmId}`);
+  }
 }

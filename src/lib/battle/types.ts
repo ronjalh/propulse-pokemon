@@ -12,6 +12,8 @@ export type StatusCondition =
 export type MoveSlot = {
   move: Move;
   ppLeft: number;
+  /** True when this move was learned as a cross-type TM; damage is multiplied by 0.85×. */
+  isTm?: boolean;
 };
 
 export type BattleCard = {

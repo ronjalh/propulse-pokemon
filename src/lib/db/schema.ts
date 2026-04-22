@@ -202,6 +202,28 @@ export const moves = pgTable(
   (t) => [index("moves_type_idx").on(t.type)],
 );
 
+// ─────────────────────────────────────────────────────────────
+// Per-Person Learnsets — who can use which moves
+// ─────────────────────────────────────────────────────────────
+
+export const personLearnset = pgTable(
+  "person_learnset",
+  {
+    personId: uuid("person_id")
+      .notNull()
+      .references(() => persons.id, { onDelete: "cascade" }),
+    moveId: text("move_id")
+      .notNull()
+      .references(() => moves.id, { onDelete: "cascade" }),
+    isTm: boolean("is_tm").notNull().default(false),
+    learnedAtLevel: integer("learned_at_level"),
+  },
+  (t) => [
+    primaryKey({ columns: [t.personId, t.moveId] }),
+    index("learnset_person_idx").on(t.personId),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type Person = typeof persons.$inferSelect;
 export type NewPerson = typeof persons.$inferInsert;
@@ -210,3 +232,5 @@ export type NewCard = typeof cards.$inferInsert;
 export type Move = typeof moves.$inferSelect;
 export type NewMove = typeof moves.$inferInsert;
 export type MoveCategory = (typeof moveCategoryEnum.enumValues)[number];
+export type LearnsetEntry = typeof personLearnset.$inferSelect;
+export type NewLearnsetEntry = typeof personLearnset.$inferInsert;
