@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { battleChannelName } from "@/lib/realtime/events";
 import { isBattleParticipant } from "@/lib/realtime/participants";
+import "@/lib/realtime/register-participants";
 import { authorizePrivateChannel } from "@/lib/realtime/server";
 
 // Pusher sends `socket_id` + `channel_name` in an application/x-www-form-urlencoded body.
