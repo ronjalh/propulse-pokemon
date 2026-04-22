@@ -71,6 +71,7 @@ export default async function HomePage() {
 
       <nav className="w-full max-w-2xl grid grid-cols-2 gap-3">
         <NavLink href="/packs" label="Open a pack" />
+        <NavLink href="/collection" label="My Collection" />
         <NavLink href="/pokedex" label="Pokédex" />
         <NavLink href="/battle" label="Battle" disabled />
         <NavLink href="/trade" label="Trade" disabled />
