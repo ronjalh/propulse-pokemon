@@ -4,8 +4,10 @@ import Image from "next/image";
 import { auth } from "@/auth";
 import { signOutAction } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
+import { CreditsBadge } from "@/components/layout/CreditsBadge";
 import { db } from "@/lib/db/client";
 import { cards, persons } from "@/lib/db/schema";
+import { getBalance } from "@/lib/economy/credits";
 import { count, eq } from "drizzle-orm";
 
 export default async function HomePage() {
@@ -15,13 +17,14 @@ export default async function HomePage() {
 
   const userId = session.user.id;
 
-  const [collection, pokedex] = await Promise.all([
+  const [collection, pokedex, balance] = await Promise.all([
     db
       .select({ n: count() })
       .from(cards)
       .where(eq(cards.ownerId, userId))
       .then((r) => r[0]?.n ?? 0),
     db.select({ n: count() }).from(persons).then((r) => r[0]?.n ?? 0),
+    getBalance(userId),
   ]);
 
   return (
@@ -46,11 +49,14 @@ export default async function HomePage() {
             </div>
           </div>
         </div>
-        <form action={signOutAction}>
-          <Button type="submit" variant="ghost" size="sm">
-            Sign out
-          </Button>
-        </form>
+        <div className="flex items-center gap-2">
+          <CreditsBadge userId={userId} />
+          <form action={signOutAction}>
+            <Button type="submit" variant="ghost" size="sm">
+              Sign out
+            </Button>
+          </form>
+        </div>
       </header>
 
       <div className="w-full max-w-2xl space-y-2">
@@ -61,7 +67,7 @@ export default async function HomePage() {
       </div>
 
       <div className="w-full max-w-2xl grid grid-cols-2 gap-4">
-        <StatCard label="Propulse Credits" value={session.user.credits} />
+        <StatCard label="Propulse Credits" value={balance} />
         <StatCard
           label="Pokédex"
           value={`${collection} / ${pokedex}`}

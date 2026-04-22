@@ -1,12 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { inArray, sql } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
-import { cards, persons, users, type NewCard, type Person } from "@/lib/db/schema";
+import { cards, persons, type NewCard, type Person } from "@/lib/db/schema";
 import { generateIVs, rollShiny } from "@/lib/cards/stats";
+import { InsufficientCreditsError, logCardEvent, spend } from "@/lib/economy/credits";
 import { PACKS, type PackType, type RarityWeights } from "./types";
 
 type Rarity = "common" | "rare" | "epic" | "legendary";
@@ -50,17 +51,17 @@ export async function openPackAction(formData: FormData): Promise<never> {
 
   if (pool.length === 0) throw new Error("Empty person pool");
 
-  // Atomic credit deduction (Neon HTTP has no multi-statement tx).
-  const debit = await db
-    .update(users)
-    .set({ credits: sql`${users.credits} - ${config.costCredits}` })
-    .where(
-      sql`${users.id} = ${userId} AND ${users.credits} >= ${config.costCredits}`,
-    )
-    .returning({ credits: users.credits });
-
-  if (debit.length === 0) {
-    redirect("/packs?error=insufficient");
+  try {
+    await spend({
+      userId,
+      amount: config.costCredits,
+      reason: `pack:${packType}`,
+    });
+  } catch (err) {
+    if (err instanceof InsufficientCreditsError) {
+      redirect("/packs?error=insufficient");
+    }
+    throw err;
   }
 
   const rolls: NewCard[] = [];
@@ -85,8 +86,17 @@ export async function openPackAction(formData: FormData): Promise<never> {
     .insert(cards)
     .values(rolls)
     .returning({ id: cards.id });
-  const ids = inserted.map((c) => c.id).join(",");
 
+  for (const c of inserted) {
+    await logCardEvent({
+      userId,
+      kind: "card_acquire",
+      cardId: c.id,
+      reason: `pack:${packType}`,
+    });
+  }
+
+  const ids = inserted.map((c) => c.id).join(",");
   redirect(`/packs/result?ids=${ids}`);
 }
 

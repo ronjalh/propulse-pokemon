@@ -234,3 +234,39 @@ export type NewMove = typeof moves.$inferInsert;
 export type MoveCategory = (typeof moveCategoryEnum.enumValues)[number];
 export type LearnsetEntry = typeof personLearnset.$inferSelect;
 export type NewLearnsetEntry = typeof personLearnset.$inferInsert;
+
+// ─────────────────────────────────────────────────────────────
+// Transaction log — audit trail for every credit / card movement
+// ─────────────────────────────────────────────────────────────
+
+export const transactionKindEnum = pgEnum("transaction_kind", [
+  "credits_earn",
+  "credits_spend",
+  "card_acquire",
+  "card_transfer",
+  "card_consumed",
+]);
+
+export const transactionLog = pgTable(
+  "transaction_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: transactionKindEnum("kind").notNull(),
+    amount: integer("amount"),
+    cardId: uuid("card_id").references(() => cards.id, { onDelete: "set null" }),
+    relatedBattleId: uuid("related_battle_id"),
+    reason: text("reason").notNull(),
+  },
+  (t) => [
+    index("tx_user_at_idx").on(t.userId, t.at),
+    index("tx_kind_idx").on(t.kind),
+  ],
+);
+
+export type Transaction = typeof transactionLog.$inferSelect;
+export type NewTransaction = typeof transactionLog.$inferInsert;
+export type TransactionKind = (typeof transactionKindEnum.enumValues)[number];

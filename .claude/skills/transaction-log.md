@@ -18,4 +18,9 @@ If a card changes owner or credits change hands, there's a row explaining why. E
 - Admin view shows recent entries
 
 ## Status
-- [ ] Not started
+- [x] `transaction_log` table + `transaction_kind` enum added to schema — indexes on `(userId, at)` and `kind`; migration `0004_dizzy_klaw.sql` applied — 2026-04-22
+- [x] Used by `src/lib/economy/credits.ts`: every `spend`/`earn` writes a log row; `logCardEvent(...)` writes the card-movement rows
+- [x] `openPackAction` now emits a `credits_spend` + one `card_acquire` row per rolled card
+
+## Not yet
+- [ ] Admin view to display recent entries (belongs in `admin-panel` skill)

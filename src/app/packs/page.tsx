@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
+import { CreditsBadge } from "@/components/layout/CreditsBadge";
+import { getBalance } from "@/lib/economy/credits";
 import { PACKS, type PackType } from "@/lib/packs/types";
 import { openPackAction } from "@/lib/packs/actions";
 
@@ -11,6 +13,7 @@ export default async function PacksPage({ searchParams }: PageProps) {
   const session = await auth();
   if (!session?.user) redirect("/signin");
   const { error } = await searchParams;
+  const balance = await getBalance(session.user.id);
 
   return (
     <main className="min-h-screen p-6 max-w-3xl mx-auto space-y-6">
@@ -18,10 +21,7 @@ export default async function PacksPage({ searchParams }: PageProps) {
         <Link href="/" className="text-sm text-muted-foreground hover:underline">
           ← Back
         </Link>
-        <div className="text-sm">
-          Credits:{" "}
-          <span className="font-bold tabular-nums">{session.user.credits}</span>
-        </div>
+        <CreditsBadge userId={session.user.id} />
       </div>
 
       <h1 className="text-3xl font-bold tracking-tight">Open a pack</h1>
@@ -34,7 +34,7 @@ export default async function PacksPage({ searchParams }: PageProps) {
 
       <div className="grid gap-4">
         {(Object.values(PACKS) as Array<(typeof PACKS)[PackType]>).map((p) => {
-          const canAfford = session.user.credits >= p.costCredits;
+          const canAfford = balance >= p.costCredits;
           return (
             <form
               key={p.type}

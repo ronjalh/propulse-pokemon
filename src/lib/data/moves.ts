@@ -145,6 +145,7 @@ export const MOVES: NewMove[] = [
   { id: "mentorship_session", name: "Mentorship Session", type: "Dragon", category: "status", power: null, accuracy: 60, pp: 10, priority: 0, effect: "sleep", flavor: "A 90-minute monologue about 'the old days'." },
   { id: "legacy_wisdom", name: "Legacy Wisdom", type: "Dragon", category: "physical", power: 90, accuracy: 90, pp: 10, priority: 0, effect: null, flavor: "What worked in 1998 still works now." },
   { id: "dragon_breath", name: "Dragon Breath", type: "Dragon", category: "special", power: 60, accuracy: 100, pp: 20, priority: 0, effect: "paralysis_chance_30", flavor: "A measured exhalation of ancient energy." },
+  { id: "backseating", name: "Backseating", type: "Dragon", category: "status", power: null, accuracy: 100, pp: 20, priority: 0, effect: "confusion", flavor: "A constant stream of unsolicited advice from behind — the target loses focus." },
 
   // ── Universal TMs (Normal type, learnable by any) ────────────────────────
   { id: "tackle", name: "Tackle", type: "Normal", category: "physical", power: 40, accuracy: 100, pp: 35, priority: 0, effect: null, flavor: "A full-body collision." },

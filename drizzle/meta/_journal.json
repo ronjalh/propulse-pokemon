@@ -29,6 +29,13 @@
       "when": 1776888512076,
       "tag": "0003_lean_omega_red",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776888736272,
+      "tag": "0004_dizzy_klaw",
+      "breakpoints": true
     }
   ]
 }

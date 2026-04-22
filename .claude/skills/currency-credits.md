@@ -19,4 +19,12 @@ Single in-game currency. Earn from battles + daily reward; spend on packs.
 - Displayed in navbar at all times
 
 ## Status
-- [ ] Not started
+- [x] `users.credits` already had default 200 from `database-setup`
+- [x] `src/lib/economy/credits.ts` — `earn({userId, amount, reason})`, `spend({...})` (atomic guarded UPDATE so concurrent spends cannot race below zero), `getBalance(userId)`, `logCardEvent(...)`, `InsufficientCreditsError`
+- [x] Every mutation inserts a `transaction_log` row (reason string is required)
+- [x] `openPackAction` now goes through `spend()` — no more raw SQL for credits anywhere
+- [x] `CreditsBadge` (server component, always fresh from DB) shown on `/` and `/packs` page headers — 2026-04-22
+
+## Not yet
+- [ ] Daily login bonus (belongs in `daily-rewards` skill)
+- [ ] Battle-win rewards (will land with `battle-wagering`)
