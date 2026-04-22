@@ -1,0 +1,246 @@
+{
+  "season": "2026",
+  "project": "Fossekall",
+  "source": "https://www.propulse.no/Team",
+  "capturedAt": "2026-04-22",
+  "disciplines": [
+    {
+      "name": "Board",
+      "defaultTitle": "",
+      "members": [
+        { "name": "Magnus Indrevær", "title": "Vice Chairman", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/414c9354-d1cc-42a3-8284-ca727280bf1e_Magnus_I.jpg", "linkedIn": "https://www.linkedin.com/in/magnus-indrev%C3%A6r-637940251?trk=contact-info", "email": "magnus.indrever@propulsentnu.no" },
+        { "name": "Tobias Naustrøm Lien", "title": "Chief Financial Officer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/8f21f8cc-787d-4cd8-a9b3-03a9731ea1ed_Tobias_Lien_(1).jpg", "linkedIn": "https://www.linkedin.com/in/tobias-lien-360037293/", "email": "tobias.lien@propulsentnu.no" },
+        { "name": "Heerad Malekloo", "title": "Chief Technical Officer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/fda03086-9641-4613-9965-aed63eb61d6f_Heerad_Malekloo.jpg", "linkedIn": "www.linkedin.com/in/heerad-malekloo", "email": "heerad.malekloo@propulsentnu.no" },
+        { "name": "Milton Heen", "title": "Member Representative", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/25a0efd0-2a52-4c3f-98c1-0f2de8f15d59_Milton_heen.jpg", "linkedIn": "www.linkedin.com/in/MiltonHeen", "email": "milton.heen@propulsentnu.no" },
+        { "name": "Stian Alseth", "title": "Chairman", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/8ca46df8-1959-42b7-a306-fa2649c6c656_Stian_Alseth.jpg", "linkedIn": "https://www.linkedin.com/in/stian-alseth-b64b61232/", "email": "stian.alseth@propulsentnu.no" },
+        { "name": "Jakob Ip", "title": "Member Representative", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/207b26db-8432-4bf8-8c1e-2683b3030e80_The_one_and_only_big_ipper.jpg", "linkedIn": "https://www.linkedin.com/in/jakob-ip-0a962029b/", "email": "mordi@propulsentnu.no" }
+      ],
+      "subDisciplines": []
+    },
+    {
+      "name": "Propulsion",
+      "defaultTitle": "",
+      "members": [
+        { "name": "William Dugan", "title": "Chief Propulsion Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/00499ec3-8797-4e53-a1e9-7ad9e99f85a1_William_Dugan.jpg", "linkedIn": "", "email": "w.dugan@propulsentnu.no" }
+      ],
+      "subDisciplines": [
+        {
+          "name": "Thrust Chamber",
+          "defaultTitle": "",
+          "members": [
+            { "name": "Jan Villmann Vik", "title": "Thrust Chamber Lead", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/6f90996c-b9aa-4c7e-9a7f-30fe2859227d_Jan_Vik.jpg", "linkedIn": "", "email": "jan.vik@propulsentnu.no" },
+            { "name": "Mardin Alizadeh", "title": "Thrust Chamber Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/a69004d9-80f3-40bb-8962-e41ed556a7c9_Mardin_Alizadeh.jpg", "linkedIn": "https://www.linkedin.com/in/mardin-alizadeh-2a148a267/", "email": "mardin.alizadeh@propulsentnu.no" },
+            { "name": "Adrian Wilhelmsen", "title": "CFD Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/a834d57b-8a5d-4d99-81c9-9703f3dca0c5_Adrian_Wilhelmsen.jpg", "linkedIn": "https://www.linkedin.com/in/adrian-wilhelmsen-957143251/", "email": "adrian.wilhelmsen@propulsentnu.no" },
+            { "name": "Storm Giving Castberg", "title": "CFD Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/283e6ff3-fc09-481b-860b-dfb2160825cf_Storm_Giving_Castberg.jpg", "linkedIn": "https://www.linkedin.com/in/storm-giving-castberg-942b34326/", "email": "storm.castberg@propulsentnu.no" },
+            { "name": "Erlend Sandnes", "title": "CFD Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/ac308e3b-db88-45c2-bd48-129e3c242eb5_Erlend_Sandnes.jpg", "linkedIn": "", "email": "Erlend.sandnes@propulsentnu.no" }
+          ]
+        },
+        {
+          "name": "Feed System",
+          "defaultTitle": "",
+          "members": [
+            { "name": "Jakob Ip", "title": "Feed System Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/8d4bd4f2-0cb9-46b8-8a8a-9c5f6bea4572_The_one_and_only_big_ipper.jpg", "linkedIn": "https://www.linkedin.com/in/jakob-ip-0a962029b/", "email": "mordi@propulsentnu.no" },
+            { "name": "Maksimilian Hogsnes Melø", "title": "Feed System Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/c37f3b3e-8537-4928-89ad-c035f8eed592_Maksimiliam_Hongnes_Mælø.jpg", "linkedIn": "https://www.linkedin.com/in/maksimilian-hogsnes-melø-838947281/", "email": "maksimilan.melo@propulsentnu.no" },
+            { "name": "Waldemar Sarheim Anthun", "title": "Feed System Lead", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/d7802c09-6afe-4a04-a8bf-e5c1871fd17a_Waldemar_Anthun.jpg", "linkedIn": "https://www.linkedin.com/in/waldemar-anthun-6794062a4/", "email": "waldemar.anthun@propulsentnu.no" },
+            { "name": "Marcus Walter Åsen", "title": "Feed System Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/26beec00-c107-4158-9263-f7a3582c67e3_Marcus_Walter_Åsen.jpg", "linkedIn": "", "email": "marcus.walter@propulsentnu.no" },
+            { "name": "Melissa Gamlem", "title": "Feed System Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/c5ab3f58-d2d8-4121-9f3e-5a4c3baad641_Melissa_Gamlem.jpg", "linkedIn": "Melissa Gamlem", "email": "melissa.gamlem@propulsentnu.no" },
+            { "name": "Henry Kvalsund", "title": "Feed System Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/c142c407-5fd3-47c6-b418-2fa42c531de9_Henry_Kvalsund.jpg", "linkedIn": "", "email": "henry.kvalsund@propulsentnu.no" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Mechanical",
+      "defaultTitle": "",
+      "members": [
+        { "name": "Alexander Field", "title": "Chief Mechanical Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/297557b6-0853-4f00-97c2-39126371e8c4_Akselander.jpg", "linkedIn": "www.linkedin.com/in/alexander-james-field", "email": "alexander.field@propulsentnu.no" }
+      ],
+      "subDisciplines": [
+        {
+          "name": "Inner Structure",
+          "defaultTitle": "",
+          "members": [
+            { "name": "Oddvar Nåvik", "title": "Inner Structure Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/ba26c6a3-ac0f-48e8-9971-19bf1dd02d6f_Oddvar_Nåvik.jpg", "linkedIn": "https://linkedin.com/in/oddvar-nåvik-5b826a328", "email": "oddvar.navik@propulsentnu.no" },
+            { "name": "Abinth Sivarajah", "title": "Inner Structure Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/e5875240-579f-48b3-a53f-2eddee573a76_Abinth_Sivarajah.jpg", "linkedIn": "https://www.linkedin.com/in/abinth-sivarajah-624896302/", "email": "abinth.sivarajah@propulsentnu.no" },
+            { "name": "Ole Magnus Skjerven", "title": "Inner Structure Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/17daa73e-3618-4e3e-8707-da715cff3512_Ole_Magnus_Skjerven.jpg", "linkedIn": "", "email": "ole.magnus@propulsentnu.no" },
+            { "name": "Daniel Walderhaug", "title": "Inner Structure Lead", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/4a1228e1-a692-4eee-8135-b2ea6b5ceca1_Denial_Walderhaug.jpg", "linkedIn": "www.linkedin.com/in/danielwalderhaug", "email": "daniel.walderhaug@propulsentnu.no" }
+          ]
+        },
+        {
+          "name": "Outer Structure",
+          "defaultTitle": "",
+          "members": [
+            { "name": "Mathias Dahl Bråten", "title": "Outer Structure Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/anoastro.png", "linkedIn": "", "email": "mathias.dahl@propulsentnu.no" },
+            { "name": "Johan Storegjerde", "title": "Outer Structure Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/b5da7efe-9af7-4521-8648-49527c7e7a2a_Johan_Storegjerde.jpg", "linkedIn": "", "email": "johan.storegjerde@propulsentnu.no" },
+            { "name": "Filip Espedal Hagen", "title": "Outer Structure Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/94907b26-f12f-4805-8bc2-1b1e9e9dcdb9_Filip_Espedal_hagen.jpg", "linkedIn": "https://www.linkedin.com/in/filip-espedal-hagen-779463303?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app", "email": "filip.espedal@propulsentnu.no" }
+          ]
+        },
+        {
+          "name": "Recovery",
+          "defaultTitle": "",
+          "members": [
+            { "name": "Jonas Reitan", "title": "Recovery Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/6891c396-0e5e-4495-867d-417072a53954_Jonas_reitan.jpg", "linkedIn": "", "email": "jonas.reitan@propulsentnu.no" },
+            { "name": "Hans Rogstadkjernet", "title": "Recovery Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/15059359-3f46-4a23-a35f-a92a2a567fd7_Hans_Rogstadkjernet.jpg", "linkedIn": "", "email": "hans.rogstadkjernet@propulsentnu.no" },
+            { "name": "Jonas Nilsen Fagerhaug", "title": "Recovery Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/d6cd7bd3-8ae1-4174-9f5b-54cd4b90bcbb_Jonas_Nilsen_Fagerhaug.jpg", "linkedIn": "https://www.linkedin.com/in/jonas-fagerhaug-ab5572334/", "email": "jonas.nilsen@propulsentnu.no" },
+            { "name": "Oscar Alexander Estensen", "title": "Recovery Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/f621821f-2fb0-4750-9ab0-7ef0d1b2f279_Oscar_Alexander_Estensen.jpg", "linkedIn": "https://www.linkedin.com/in/oscar-a-estensen", "email": "oscar.alexander@propulsentnu.no" }
+          ]
+        },
+        {
+          "name": "Launch Site",
+          "defaultTitle": "",
+          "members": [
+            { "name": "Amund Rønning-Lien", "title": "Launch Site Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/6286330a-d0e3-4c4c-a8ce-812a980347a5_Amund_Rønning-Lien.jpg", "linkedIn": "", "email": "amund.roenning@propulsentnu.no" },
+            { "name": "Sara Ødegård", "title": "Lead Launch Site Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/a30c7f62-24c7-4817-be51-937f2b2026a6_Sarah_Ædegård.jpg", "linkedIn": "https://www.linkedin.com/in/sara-%C3%B8deg%C3%A5rd-96b7a5320/", "email": "sara.odegard@propulsentnu.no" },
+            { "name": "Camilla Lundby Brenden", "title": "Launch Site Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/43854d53-46b3-4eb2-833b-3bcd5ef44d3b_Camilla_Brenden.jpg", "linkedIn": "", "email": "camilla.brenden@propulsentnu.no" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Marketing",
+      "defaultTitle": "",
+      "members": [
+        { "name": "Philip Draget", "title": "Chief Marketing Officer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/0c49a208-fd10-4490-b0c1-eace58839c70_Philip_Draget.jpg", "linkedIn": "https://www.linkedin.com/in/philip-draget-9ba2a9325/", "email": "philip.draget@propulsentnu.no" }
+      ],
+      "subDisciplines": [
+        {
+          "name": "Marketing",
+          "defaultTitle": "",
+          "members": [
+            { "name": "Anisha Irene Kirsebom", "title": "Social Media Manager", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/2b450edd-f1b1-419f-ad2c-81e4be58611f_Anisha_Irene.jpg", "linkedIn": "", "email": "anisha.irene@propulsentnu.no" },
+            { "name": "Alexandra Haugen", "title": "Graphic Designer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/447c5b88-d4a9-4970-8ffd-1d71389e239c_Alexandra_Haugen.jpg", "linkedIn": "", "email": "alexandra.haugen@propulsentnu.no" },
+            { "name": "Casper Draget", "title": "Photographer / Videographer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/133f1aa6-7000-4e6c-9177-85c40bb6b0eb_Casper_Draget.jpg", "linkedIn": "www.linkedin.com/in/casper-draget-4290bb325", "email": "casper.draget@propulsentnu.no" },
+            { "name": "Johanne Ulsund Refsnæs", "title": "Social Coordinator", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/cfa75525-d53b-4b22-80a6-41b88b7b2a31_Johanne_R.jpg", "linkedIn": "", "email": "johanne.ulsund@propulsentnu.no" },
+            { "name": "Emmanuel Christian Jjunju", "title": "Photographer / Videographer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/84d765ad-bace-41cf-be4c-fd82329bf4cb_Emmanuel_Christian.jpg", "linkedIn": "www.linkedin.com/in/emmanuel-jjunju-102a96322", "email": "emmanuel.christian@propulsentnu.no" },
+            { "name": "Renny Georgieva", "title": "Social media manager", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/f81d3d4e-f5b0-4be0-96b5-830cf2d48029_Renny.jpg", "linkedIn": "www.linkedin.com/in/renny-pavlova-chausheva-516149290", "email": "renny.pc@propulsentnu.no" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "IT",
+      "defaultTitle": "",
+      "members": [
+        { "name": "Ronja Lem Hetland", "title": "Chief Information Officer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/6c91ff10-d4af-479c-9f25-78f11e7bff5c_Ronja_(1).png", "linkedIn": "", "email": "ronja.hetland@propulsentnu.no" }
+      ],
+      "subDisciplines": [
+        {
+          "name": "Developer",
+          "defaultTitle": "",
+          "members": [
+            { "name": "Daniel Grøtan Gregusson", "title": "Web Developer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/4751198e-b3b2-48c3-afcd-3bc19389985b_DSC02368.jpg", "linkedIn": "https://www.linkedin.com/in/daniel-gr%C3%B8tan-gregusson-51aa28293/", "email": "daniel.groetan@propulsentnu.no" },
+            { "name": "Gaute Greiff Flægstad", "title": "Project Lead", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/55ac8770-e14a-425c-a5b0-923f37f52c9f_DSC02325.jpg", "linkedIn": "www.linkedin.com/in/gaute-flagstad", "email": "gaute.flaegstad@propulsentnu.no" },
+            { "name": "Simen Fritsvold", "title": "Web Developer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/866b611c-4890-44c4-9de9-b28d66438fba_DSC02374.jpg", "linkedIn": "https://www.linkedin.com/in/simen-fritsvold-88b661268?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app", "email": "simen.fritsvold@propulsentnu.no" }
+          ]
+        },
+        {
+          "name": "DevOps",
+          "defaultTitle": "",
+          "members": [
+            { "name": "Gabija Liesyte", "title": "DevOps Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/871f3d8c-94ea-4807-a82a-bbb516f6bd2c_DSC02346.jpg", "linkedIn": "", "email": "gabija.liesyte@propulsentnu.no" },
+            { "name": "Lucas Giac Nhan Vo", "title": "DevOps Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/e0b9e4ae-167e-400e-9ead-28b445fcf451_DSC02453.jpg", "linkedIn": "https://www.linkedin.com/in/lucas-vo-b37062282/", "email": "lucas.vo@propulsentnu.no" },
+            { "name": "Ola Vanni Flaata", "title": "DevOps Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/bf081661-1b2d-444e-8f31-e3e33f2ef1d7_Ola.jpg", "linkedIn": "", "email": "ola.flaata@propulsentnu.no" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Business",
+      "defaultTitle": "",
+      "members": [
+        { "name": "Stian Grøttumsbråten", "title": "Key Account Manager", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/b2cf1508-ab58-4f0f-9fe1-7158377b033c_Stian_Grøttumsbråten.jpg", "linkedIn": "", "email": "stian.groettumsbraaten@propulsentnu.no" },
+        { "name": "Luka Krstic", "title": "Key Account Manager", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/9e696d80-5f02-4470-8145-1b017f52bac1_Luka_Krstic.jpg", "linkedIn": "", "email": "luka.krstic@propulsentnu.no" },
+        { "name": "Arun Cithu Vijay", "title": "Key Account Manager", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/ec129db0-c70b-446d-b486-a533a38783a0_Arun_cithu_Vijay.jpg", "linkedIn": "Arun Cithu Vijay", "email": "arun.cithu@propulsentnu.no" }
+      ],
+      "subDisciplines": []
+    },
+    {
+      "name": "Software",
+      "defaultTitle": "",
+      "members": [
+        { "name": "Bianca Jagtøyen Mazzetti", "title": "Chief Software Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/2ff7782a-32d0-4a2a-afc5-2783d36e9c71_Bianca.jpg", "linkedIn": "", "email": "bianca.mazzetti@propulsentnu.no" }
+      ],
+      "subDisciplines": [
+        {
+          "name": "Engine Software",
+          "defaultTitle": "",
+          "members": [
+            { "name": "Henrik Berg", "title": "Engine Software Lead", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/b367fe9a-ce1e-4c21-a4dc-5e3179037996_Henrik_Berg.jpg", "linkedIn": "", "email": "henrik.berg@propulsentnu.no" },
+            { "name": "Daniel Aleksander Jacobsen", "title": "Software Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/e524740a-1000-4ea7-b441-46ab8ee3d055_Daniel_Jacobsen.jpg", "linkedIn": "", "email": "daniel.aleksander@propulsentnu.no" },
+            { "name": "Vetle Rød Dahl", "title": "Software Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/e0fea917-a689-4230-bbb3-74a66a599590_Vetle_Rød_Dahl.jpg", "linkedIn": "https://www.linkedin.com/in/vetle-r%C3%B8d-dahl-679414226/", "email": "vetle.dahl@propulsentnu.no" },
+            { "name": "Paulius Juzenas", "title": "Software Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/d0e726b1-c4ef-4509-a02b-96ad1026b797_Paulius_Juzenas.jpg", "linkedIn": "https://www.linkedin.com/in/paulius-juzenas-15979429b/", "email": "paulius.juzenas@propulsentnu.no" },
+            { "name": "Erlend Tryti Lindseth", "title": "Software Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/5f6479fc-8bc9-46c6-933f-45f9958d979a_Erlend_Tryti_Lindseth.jpg", "linkedIn": "https://www.linkedin.com/in/erlendtryti/", "email": "erlend.lindseth@propulsentnu.no" }
+          ]
+        },
+        {
+          "name": "Recovery Software",
+          "defaultTitle": "",
+          "members": [
+            { "name": "Daniel Azagra Næss", "title": "Software Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/905ccc24-ae92-497d-8422-e11c6c3b94d8_Daniel_Næss.jpg", "linkedIn": "https://www.linkedin.com/in/daniel-azagra-n/", "email": "daniel.ness@propulsentnu.no" },
+            { "name": "Marcus Wiborg", "title": "Software Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/5e5813ca-501c-460f-89a5-930856b5cc22_Marcus_Wiborg_(1).jpg", "linkedIn": "linkedin.com/in/marcus-wiborg-101472231", "email": "marcus.wiborg@propulsentnu.no" },
+            { "name": "Nikolai Borbe", "title": "Recovery Software Lead", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/015c478a-c474-4f8b-ad20-cbb347492be0_Nikolai_Borbe.jpg", "linkedIn": "https://no.linkedin.com/in/nikolai-borbe-347aa11a3", "email": "nikolai.borbe@propulsentnu.no" },
+            { "name": "Jusra Ali", "title": "Software Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/3db2c467-70ba-417d-80b4-c165e4400a8a_Jusra_Ali.jpg", "linkedIn": "Jusra", "email": "jusra.ali@propulsentnu.no" },
+            { "name": "Mikhail Rohloff", "title": "Software Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/45869553-c132-4268-bc84-d02b46925f4b_Mikhail_Rohloff.jpg", "linkedIn": "", "email": "mikhail.rohloff@propulsentnu.no" }
+          ]
+        },
+        {
+          "name": "Telemetry",
+          "defaultTitle": "",
+          "members": [
+            { "name": "Frikk Ormestad Larsen", "title": "Telemetry Lead", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/766e25b6-91ac-4b4c-a04a-edc20303b1f8_Frikk_Ormestad_Larsen.jpg", "linkedIn": "https://www.linkedin.com/in/frikk-balder/", "email": "frikk.ormestad@propulsentnu.no" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Electrical",
+      "defaultTitle": "",
+      "members": [
+        { "name": "Abel Horneland", "title": "Chief Electrical Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/c616f1c1-fdc4-46a1-9c85-337d6a2bdd91_Abol_Hornyland.jpg", "linkedIn": "https://www.linkedin.com/in/abel-horneland-3999bb236/", "email": "abel.horneland@propulsentnu.no" }
+      ],
+      "subDisciplines": [
+        {
+          "name": "Electrical",
+          "defaultTitle": "",
+          "members": [
+            { "name": "Aksel Kvenild Øyasæter", "title": "Electrical Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/5e328168-e558-434f-bbdb-97aa00ffa745_Aksel_Øyasæter.jpg", "linkedIn": "https://www.linkedin.com/in/aksel-k-o?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app", "email": "aksel.kvenild@propulsentnu.no" },
+            { "name": "Mads-Andreas Mo", "title": "Electrical Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/5658e848-8daf-4214-b772-dfb382448520_Mads_Mo.jpg", "linkedIn": "", "email": "mads.mo@propulsentnu.no" },
+            { "name": "Erik Kim Nestaas", "title": "Electrical Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/c43d30cc-03d9-4351-9b3b-dbd7d0d1129b_Erik_Kim_Nestaas.jpg", "linkedIn": "https://www.linkedin.com/in/erik-kim-nestaas-ab5715355/", "email": "erik.kim@propulsentnu.no" },
+            { "name": "Anders Holtan", "title": "Electrical Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/78848fcf-f949-47dd-9e41-55535f1ca5e3_Anders_Holtan.jpg", "linkedIn": "https://no.linkedin.com/in/anders-holtan-715635182", "email": "anders.holtan@propulsentnu.no" },
+            { "name": "Gustav Stokholm", "title": "Electrical Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/93f9a752-3974-41c8-8852-9a8e0f417d57_Gustav_Stokholm.jpg", "linkedIn": "http://linkedin.com/in/gustav-stokholm-72052125b", "email": "gustav.stokholm@propulsentnu.no" },
+            { "name": "Christoffer Svendsen", "title": "Electrical Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/03b9dd98-908e-4e4f-9631-5048ff49f19c_Christoffer_Svendsen.jpg", "linkedIn": "https://no.linkedin.com/in/christoffer-svendsen-841777271", "email": "christoffer.svendsen@propulsentnu.no" },
+            { "name": "Markus Arntzen", "title": "Electrical Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/b8a232e5-8dfb-4c8a-b4be-b54bea0fccab_Markus_Arntzern.jpg", "linkedIn": "www.linkedin.com/in/markusarntzen", "email": "markus.arntzen@propulsentnu.no" },
+            { "name": "Milton Heen", "title": "Electrical Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/b691ae8a-e0cd-4883-a9ff-62ba14559be1_Milton_heen.jpg", "linkedIn": "www.linkedin.com/in/MiltonHeen", "email": "milton.heen@propulsentnu.no" },
+            { "name": "Ådne Høyslo", "title": "Electrical Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/8fd63d3b-0d7b-4fc2-a3c4-9b33187e4ad4_Ådne_Høyslo.jpg", "linkedIn": "https://www.linkedin.com/in/%C3%A5dne-h%C3%B8yslo-8b6532327/", "email": "adne.hoyslo@propulsentnu.no" },
+            { "name": "Wassim Fathallah", "title": "Electrical Engineer", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/97d74dea-b895-46c6-bcec-00240291654d_Wassim_Fathallah.jpg", "linkedIn": "https://www.linkedin.com/in/wassim-fathallah-b6569b254", "email": "wassim.fathallah@propulsentnu.no" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Mentors",
+      "defaultTitle": "",
+      "members": [
+        { "name": "Even Drugli", "title": "Propulsion Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/f36c6e9d-f33f-4060-af59-cf508b3e94c1_Even_Drugli.jpg", "linkedIn": "", "email": "even.drugli@propulsentnu.no" },
+        { "name": "Sverre Ose Kristensen", "title": "Avionics Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/50fb76da-4def-4439-abe2-737d9b7e0eed_Sverre.jpg", "linkedIn": "https://www.linkedin.com/in/sverre-ose-kristensen-9263391b4/", "email": "sverre.kristensen@propulsentnu.no" },
+        { "name": "Simen Flåtter Flo", "title": "Board Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/951b6a81-ce57-48cf-9ea1-7e7925e6ca8b_Simen_Fl.jpg", "linkedIn": "linkedin.com/in/simen-flåtter-flo-7ab81620b", "email": "simen.flo@propulsentnu.no" },
+        { "name": "Mikkel Blomnes", "title": "Avionics Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/d29f4be4-0a5d-4ecf-b748-c171d3e2b868_mikkel.jpg", "linkedIn": "https://www.linkedin.com/in/mikkel-blomnes?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app", "email": "mikkel.blomnes@propulsentnu.no" },
+        { "name": "Simen Kartveit Bjerkestrand", "title": "Avionics Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/0b38f65d-8d49-48b8-b525-e223a81570ab_simen_k.webp", "linkedIn": "", "email": "Simen.K.Bjerkestrand@propulsentnu.no" },
+        { "name": "Joachim Schmidt", "title": "Board Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/5270a9d1-7fc1-4ef4-ba2c-22a1418dbfc4_joachmin_s.jpg", "linkedIn": "https://www.linkedin.com/in/joachim-s-771404b3/", "email": "joachim.schmidt@propulsentnu.no" },
+        { "name": "Henrik Weel", "title": "Business Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/6253e99a-1ea4-4f6c-b15b-e1e63d2cd1b8_henrik_w.jpg", "linkedIn": "", "email": "henrik.weel@propulsentnu.no" },
+        { "name": "Ola Vanni Flaata", "title": "Avionics mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/d2ab4ecc-4141-4e24-a06f-318d6056e1c0_Ola.jpg", "linkedIn": "", "email": "ola.flaata@propulsentnu.no" },
+        { "name": "Trond Steinagard", "title": "Propulsion Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/b6734795-3e5a-4c6d-a3db-409e2e59e113_Trond.jpg", "linkedIn": "", "email": "trond.steinagard@propulsentnu.no" },
+        { "name": "Sondre Gressløs", "title": "Mechanical Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/2c0d3fd3-bb04-44e8-9046-d83d1884388f_sondre.webp", "linkedIn": "", "email": "sondre.gresslos@propulsentnu.no" },
+        { "name": "Ole Bromseth", "title": "Mechanical Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/2ddc23a6-d063-452f-bf10-328d24dbb633_ole.jpg", "linkedIn": "", "email": "ole.bromseth@propulsentnu.no" },
+        { "name": "Jonas Knudsen", "title": "Mechanical Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/b396ecbb-9c51-4c89-816b-53216f6d0e32_jonas_k.jpg", "linkedIn": "www.linkedin.com/in/jonas-knudsen-49138b290", "email": "jonas.knudsen@propulsentnu.no" },
+        { "name": "Gaute Lien Eike", "title": "Propulsion Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/46f6ead5-9aa5-44fc-a215-0887e755ade5_gaute_e.jpg", "linkedIn": "", "email": "gaute.eike@propulsentnu.no" },
+        { "name": "Emil Fylling", "title": "Propulsion Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/78c5faf1-37d0-4ea3-8295-0ba8724c3581_emil_f.jpg", "linkedIn": "", "email": "emil.fylling@propulsentnu.no" },
+        { "name": "Celine Bjørnstad", "title": "Marketing Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/f126f30f-ffe1-44c9-94e4-1630f63d8c54_celine_b.jpg", "linkedIn": "https://www.linkedin.com/in/celine-bj%C3%B8rnstad-603622204?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app", "email": "celine.bjornstad@propulsentnu.no" },
+        { "name": "August Fagerheim", "title": "Launch Rail Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/da80631f-fe47-4883-851a-34afdc3e40df_august_f.jpg", "linkedIn": "", "email": "august.fagerheim@propulsentnu.no" },
+        { "name": "Anders Hestad", "title": "Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/3ad720ce-2165-4de3-ac0c-b3868a97884c_anders_hes.webp", "linkedIn": "", "email": "anders.hestad@propulsentnu.no" },
+        { "name": "Ane Kirstine Havstad Morkemo", "title": "Avionics Mentor", "image": "https://propulse.ams3.digitaloceanspaces.com/membership-images/2dc25614-0980-49fd-8e84-f68b81883768_ane_k.webp", "linkedIn": "https://www.linkedin.com/in/ane-kirstine-morkemo/", "email": "ane.morkemo@propulsentnu.no" }
+      ],
+      "subDisciplines": []
+    }
+  ]
+}
