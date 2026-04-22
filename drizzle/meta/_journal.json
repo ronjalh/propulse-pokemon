@@ -36,6 +36,13 @@
       "when": 1776888736272,
       "tag": "0004_dizzy_klaw",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776889664850,
+      "tag": "0005_outstanding_smiling_tiger",
+      "breakpoints": true
     }
   ]
 }

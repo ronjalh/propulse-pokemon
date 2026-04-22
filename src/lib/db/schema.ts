@@ -270,3 +270,28 @@ export const transactionLog = pgTable(
 export type Transaction = typeof transactionLog.$inferSelect;
 export type NewTransaction = typeof transactionLog.$inferInsert;
 export type TransactionKind = (typeof transactionKindEnum.enumValues)[number];
+
+// ─────────────────────────────────────────────────────────────
+// Teams — saved 6-card battle teams with move sets
+// ─────────────────────────────────────────────────────────────
+
+export type TeamMoveSets = Record<string, string[]>; // cardId → moveId[] (0–4)
+
+export const teams = pgTable(
+  "teams",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    cardIds: jsonb("card_ids").$type<string[]>().notNull(),
+    moveSets: jsonb("move_sets").$type<TeamMoveSets>().notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [index("teams_user_idx").on(t.userId)],
+);
+
+export type Team = typeof teams.$inferSelect;
+export type NewTeam = typeof teams.$inferInsert;
