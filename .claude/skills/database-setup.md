@@ -25,4 +25,8 @@ Wire up Neon as the production Postgres provider and Drizzle ORM as the type-saf
 - For scripts (seed, migrations), prefer pooled connection.
 
 ## Status
-- [ ] Not started
+- [x] `src/lib/db/client.ts` and `schema.ts` written (5 tables: users, accounts, sessions, verification_tokens, persons + 3 enums: discipline, pokemon_type, rarity) — 2026-04-22
+- [x] `drizzle.config.ts` at root with dotenv loading from `.env.local`
+- [x] npm scripts: `db:generate`, `db:migrate`, `db:push`, `db:studio`, `seed:roster`
+- [x] Initial migration generated (`drizzle/0000_pretty_secret_warriors.sql`) and applied to Neon
+- [x] Verified via `scripts/verify-db.ts`
