@@ -20,4 +20,6 @@ Enforce that only Propulse members can use the app. No guest mode. The check mus
 - This is a load-bearing invariant from `CLAUDE.md`. Do not relax it without deliberate scope change.
 
 ## Status
-- [ ] Not started
+- [x] `signIn` callback rejects anything where `profile.hd !== "propulsentnu.no"` or `email.endsWith("@propulsentnu.no") === false` — 2026-04-22
+- [x] Google's `hd` param provides the outer layer (consent screen hides non-Workspace accounts)
+- [x] Sign-in page shows "Only @propulsentnu.no accounts can sign in" on `AccessDenied`

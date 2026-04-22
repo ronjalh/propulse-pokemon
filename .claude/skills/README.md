@@ -11,7 +11,7 @@ Each file below is a scoped unit of work. When starting a skill, read it, implem
 - `error-handling.md` — Error boundaries, toasts
 
 ## Auth (3)
-- `auth-magic-link.md` — Resend magic link via Auth.js
+- `auth-google.md` — Google OAuth via Auth.js v5 (pivoted from Resend magic link)
 - `auth-domain-guard.md` — Reject non-`@propulsentnu.no`
 - `user-profile.md` — Profile page, avatar, settings
 

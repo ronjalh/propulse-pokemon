@@ -10,7 +10,7 @@ Pokémon-style trading-card battle game where the ~88 members of Propulse NTNU's
 - **TypeScript 5**, strict mode
 - **Tailwind CSS v4** + **shadcn/ui** (neutral base, CSS variables)
 - **Drizzle ORM** against **Neon Postgres** (serverless driver)
-- **Auth.js v5 (NextAuth beta)** with the **Resend** email provider — magic-link-only, domain-restricted to `@propulsentnu.no`
+- **Auth.js v5 (NextAuth beta)** with **Google OAuth** — domain-restricted to `@propulsentnu.no` via Google's `hd` param + signIn callback
 - **Pusher Channels** for real-time PvP battles; server-authoritative state in route handlers + **Upstash Redis**
 - **next-intl** for EN/NO toggle (English default)
 - **Zustand** for client-side game state, **Framer Motion** for pack-opening/battle animations
