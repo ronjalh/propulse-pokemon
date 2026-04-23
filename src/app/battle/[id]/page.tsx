@@ -1,0 +1,117 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+
+import { auth } from "@/auth";
+import { CreditsBadge } from "@/components/layout/CreditsBadge";
+import { getState } from "@/lib/battle/session";
+import { listTeamsForUser } from "@/lib/teams/queries";
+import { JoinBattle } from "./JoinBattle";
+import { BattleScreen } from "./BattleScreen";
+
+type PageProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
+};
+
+export default async function BattlePage({ params, searchParams }: PageProps) {
+  const session = await auth();
+  if (!session?.user) redirect("/signin");
+  const { id: battleId } = await params;
+  const { error } = await searchParams;
+
+  const state = await getState(battleId);
+  if (!state) notFound();
+
+  const userId = session.user.id;
+  const userEmail = session.user.email?.toLowerCase() ?? "";
+  const placeholderEmail = state.sides[1].playerId.startsWith("pending:")
+    ? state.sides[1].playerId.slice("pending:".length)
+    : null;
+  const isParticipant =
+    state.sides.some((s) => s.playerId === userId) ||
+    state.pendingOpponent?.userId === userId ||
+    placeholderEmail === userEmail;
+  if (!isParticipant) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-6">
+        <div className="text-sm text-muted-foreground">
+          You&rsquo;re not a participant in this battle.
+        </div>
+      </main>
+    );
+  }
+
+  const header = (
+    <div className="flex items-center justify-between mb-4">
+      <Link href="/" className="text-sm text-muted-foreground hover:underline">
+        ← Back
+      </Link>
+      <CreditsBadge userId={userId} />
+    </div>
+  );
+
+  if (state.phase === "awaiting_opponent") {
+    // The challenger is waiting; the invitee sees the "join" form.
+    const iAmChallenger = state.sides[0].playerId === userId;
+    if (iAmChallenger) {
+      const shareLink = `/battle/${battleId}`;
+      return (
+        <main className="min-h-screen p-6 max-w-2xl mx-auto">
+          {header}
+          <h1 className="text-2xl font-bold tracking-tight mb-2">
+            Waiting for opponent…
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Share this link with{" "}
+            <span className="font-mono">{state.pendingOpponent?.email}</span>:
+          </p>
+          <div className="mt-3 rounded-md border p-3 font-mono text-sm break-all">
+            {shareLink}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Refresh this page once they&rsquo;ve joined.
+          </p>
+        </main>
+      );
+    }
+    // Invitee view — pick a team to accept with.
+    const myTeams = await listTeamsForUser(userId);
+    const readyTeams = myTeams.filter(
+      (t) => t.cardIds.filter(Boolean).length === 6,
+    );
+    return (
+      <main className="min-h-screen p-6 max-w-2xl mx-auto space-y-4">
+        {header}
+        <h1 className="text-2xl font-bold tracking-tight">Battle challenge</h1>
+        <p className="text-sm text-muted-foreground">
+          {state.sides[0].playerId} challenged you. Pick a team to accept.
+        </p>
+        {error && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+        <JoinBattle battleId={battleId} teams={readyTeams} />
+      </main>
+    );
+  }
+
+  // phase === "live" or "ended" → real battle screen
+  const meSideIndex = state.sides.findIndex((s) => s.playerId === userId);
+  // Handle solo-mirror battles: userId appears only as side 0, mirror:<id> as side 1
+  const effectiveMeIndex =
+    meSideIndex === -1 && state.sides[1].playerId === `mirror:${userId}`
+      ? 0
+      : meSideIndex;
+
+  return (
+    <main className="min-h-screen p-4 max-w-4xl mx-auto">
+      {header}
+      <BattleScreen
+        battleId={battleId}
+        initialState={state}
+        meSideIndex={effectiveMeIndex}
+      />
+    </main>
+  );
+}

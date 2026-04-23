@@ -43,7 +43,15 @@ function redis(): Redis {
 
 // ── State is versioned so we can compare-and-set without a Lua script ──────
 
-export type VersionedState = BattleState & { version: number; deadlineMs: number };
+export type BattlePhase = "awaiting_opponent" | "live" | "ended";
+
+export type VersionedState = BattleState & {
+  version: number;
+  deadlineMs: number;
+  phase: BattlePhase;
+  /** If phase=awaiting_opponent, this is the user (id OR email) we're waiting on. */
+  pendingOpponent: { userId?: string; email?: string } | null;
+};
 
 const stateKey = (battleId: string) => `battle:${battleId}`;
 const intentKey = (battleId: string, turn: number, playerId: string) =>
@@ -122,6 +130,8 @@ export async function createBattle(
     ...state,
     version: 0,
     deadlineMs: Date.now() + TURN_TIMER_MS,
+    phase: "live",
+    pendingOpponent: null,
   };
   await setState(battleId, initial);
   await publishBattleEvent(battleId, {
@@ -130,6 +140,65 @@ export async function createBattle(
     deadlineMs: initial.deadlineMs,
   });
   return initial;
+}
+
+/**
+ * Create a battle that's waiting for the opponent to accept. Side 0 is
+ * the challenger (fully hydrated), side 1 is a placeholder with only
+ * playerId = opponent's userId (or email-pending lookup).
+ */
+export async function createPendingBattle(
+  battleId: string,
+  state: BattleState,
+  pendingOpponent: { userId?: string; email?: string },
+): Promise<VersionedState> {
+  const initial: VersionedState = {
+    ...state,
+    version: 0,
+    deadlineMs: 0,
+    phase: "awaiting_opponent",
+    pendingOpponent,
+  };
+  await setState(battleId, initial);
+  return initial;
+}
+
+/**
+ * Opponent accepts the challenge — fill side 1 and flip phase to live.
+ * Returns { ok: false } if the battle is in the wrong state.
+ */
+export async function joinPendingBattle(
+  battleId: string,
+  userId: string,
+  opponentSide: BattleState["sides"][number],
+): Promise<{ ok: true; state: VersionedState } | { ok: false; reason: string }> {
+  const state = await getState(battleId);
+  if (!state) return { ok: false, reason: "no-such-battle" };
+  if (state.phase !== "awaiting_opponent") {
+    return { ok: false, reason: "wrong-phase" };
+  }
+  const pending = state.pendingOpponent;
+  if (pending?.userId && pending.userId !== userId) {
+    return { ok: false, reason: "not-invited" };
+  }
+
+  const next: VersionedState = {
+    ...state,
+    sides: [state.sides[0], { ...opponentSide, playerId: userId }] as BattleState["sides"],
+    phase: "live",
+    version: state.version + 1,
+    deadlineMs: Date.now() + TURN_TIMER_MS,
+    pendingOpponent: null,
+  };
+  const casRes = await cas(battleId, state.version, next);
+  if (!casRes.ok) return { ok: false, reason: "race-lost" };
+
+  await publishBattleEvent(battleId, {
+    kind: "turn-start",
+    turn: next.turn,
+    deadlineMs: next.deadlineMs,
+  });
+  return { ok: true, state: next };
 }
 
 // ── Per-turn intent inbox ──────────────────────────────────────────────────
@@ -166,6 +235,8 @@ export async function submitIntent(
     ...result.newState,
     version: state.version + 1,
     deadlineMs: Date.now() + TURN_TIMER_MS,
+    phase: result.newState.winnerId ? "ended" : "live",
+    pendingOpponent: null,
   };
   const casRes = await cas(battleId, state.version, next);
   if (!casRes.ok) {
@@ -180,6 +251,7 @@ export async function submitIntent(
     kind: "turn-resolved",
     turn: state.turn,
     events: result.events,
+    newState: result.newState,
   });
 
   if (next.winnerId) {

@@ -79,7 +79,8 @@ export default async function HomePage() {
         <NavLink href="/packs" label="Open a pack" />
         <NavLink href="/collection" label="My Collection" />
         <NavLink href="/pokedex" label="Pokédex" />
-        <NavLink href="/battle" label="Battle" disabled />
+        <NavLink href="/teams" label="My Teams" />
+        <NavLink href="/battle/new" label="Battle" />
         <NavLink href="/trade" label="Trade" disabled />
       </nav>
     </main>

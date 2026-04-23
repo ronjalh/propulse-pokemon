@@ -1,4 +1,4 @@
-import type { BattleEvent as EngineEvent } from "@/lib/battle/types";
+import type { BattleEvent as EngineEvent, BattleState } from "@/lib/battle/types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Transport-level events sent over Pusher — thin wrappers around the engine's
@@ -15,6 +15,8 @@ export type TurnLifecycleEvent =
       kind: "turn-resolved";
       turn: number;
       events: EngineEvent[];
+      /** Snapshot of the new state so clients don't need to re-run the engine. */
+      newState: BattleState;
     }
   | { kind: "player-disconnected"; playerId: string }
   | { kind: "player-reconnected"; playerId: string };
