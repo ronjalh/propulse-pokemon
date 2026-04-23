@@ -126,13 +126,14 @@ export function BattleScreen({
         setDeadlineMs(event.deadlineMs);
         pushLog(`Turn ${event.turn} — choose an action.`);
         break;
-      case "turn-resolved":
-        setState((prev) => {
-          const next = applyDelta(prev, event.delta);
-          for (const e of event.events) pushLog(renderEvent(e, next));
-          return next;
-        });
+      case "turn-resolved": {
+        // Log events using the current (pre-update) state for name lookups —
+        // names are stable across turns, so this is fine. Keep the setState
+        // updater pure (React 19 strict mode can re-invoke it).
+        for (const e of event.events) pushLog(renderEvent(e, state));
+        setState((prev) => applyDelta(prev, event.delta));
         break;
+      }
       case "battle-ended":
         pushLog(`Battle ended — winner: ${event.winnerId}`);
         setState((prev) => ({ ...prev, winnerId: event.winnerId }));
