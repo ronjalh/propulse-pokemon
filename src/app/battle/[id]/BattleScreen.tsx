@@ -143,14 +143,20 @@ export function BattleScreen({
 
   return (
     <div className="space-y-4">
+      {/* Mobile: opponent stacks on top (DOM order). Desktop: YOU on left,
+          opponent on right — swapped via Tailwind `order` utilities. */}
       <div className="grid gap-4 md:grid-cols-2">
-        <CardPanel
-          side="opponent"
-          card={opp}
-          meta={cardMeta[opp.cardId]}
-          opponentInfo={opponentInfo}
-        />
-        <CardPanel side="me" card={me} meta={cardMeta[me.cardId]} />
+        <div className="md:order-2">
+          <CardPanel
+            side="opponent"
+            card={opp}
+            meta={cardMeta[opp.cardId]}
+            opponentInfo={opponentInfo}
+          />
+        </div>
+        <div className="md:order-1">
+          <CardPanel side="me" card={me} meta={cardMeta[me.cardId]} />
+        </div>
       </div>
 
       {ended ? (
