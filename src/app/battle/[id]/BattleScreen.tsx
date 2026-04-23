@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Skull } from "lucide-react";
+import { Info, Skull } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -72,15 +72,28 @@ export function BattleScreen({
   const [menu, setMenu] = useState<"moves" | "switch">("moves");
   const [intentSent, setIntentSent] = useState(false);
   const logSeq = useRef(0);
+  /** Track which turn numbers we've already shown events for so Pusher and
+   *  polling don't both log the same turn. */
+  const loggedTurnsRef = useRef<Set<number>>(new Set());
 
   function pushLog(text: string) {
     logSeq.current += 1;
-    setLog((prev) => [...prev, { id: logSeq.current, text }].slice(-30));
+    setLog((prev) => [...prev, { id: logSeq.current, text }].slice(-50));
+  }
+
+  function logTurnOnce(
+    turn: number,
+    events: BattleEvent[],
+    stateForNames: BattleState,
+  ) {
+    if (loggedTurnsRef.current.has(turn)) return;
+    loggedTurnsRef.current.add(turn);
+    for (const e of events) pushLog(renderEvent(e, stateForNames, meSideIndex));
   }
 
   // Polling fallback — fetch state every 2s so the UI stays in sync even if
-  // Pusher drops events or isn't configured. Live Pusher events (below) will
-  // usually arrive sooner; poll just catches anything missed.
+  // Pusher drops events or isn't configured. Also replays any turn events
+  // the client missed via the `recentTurns` field.
   useEffect(() => {
     if (state.winnerId) return;
     let cancelled = false;
@@ -94,14 +107,17 @@ export function BattleScreen({
           deadlineMs: number;
           phase: string;
           version: number;
+          recentTurns?: { turn: number; events: BattleEvent[] }[];
         };
-        setState((prev) => {
-          // Skip if we already have this turn or a newer one (Pusher won the race).
-          if (slim.turn < prev.turn) return prev;
-          if (slim.turn === prev.turn && slim.winnerId === prev.winnerId) {
-            // Still merge — active-index / hp could have changed within turn.
-            return applyDelta(prev, slim);
+        // Log any turns we haven't seen yet (pre-state-update names are fine —
+        // cards don't rename mid-battle).
+        if (slim.recentTurns?.length) {
+          for (const t of slim.recentTurns) {
+            logTurnOnce(t.turn, t.events, state);
           }
+        }
+        setState((prev) => {
+          if (slim.turn < prev.turn) return prev;
           return applyDelta(prev, slim);
         });
         setDeadlineMs((prev) =>
@@ -116,7 +132,8 @@ export function BattleScreen({
       cancelled = true;
       clearInterval(id);
     };
-  }, [battleId, state.winnerId, state.turn]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [battleId, state.winnerId, state.turn, meSideIndex]);
 
   // Stream battle events from Pusher.
   useBattleChannel(battleId, (event: BattleEventPayload) => {
@@ -127,10 +144,9 @@ export function BattleScreen({
         pushLog(`Turn ${event.turn} — choose an action.`);
         break;
       case "turn-resolved": {
-        // Log events using the current (pre-update) state for name lookups —
-        // names are stable across turns, so this is fine. Keep the setState
-        // updater pure (React 19 strict mode can re-invoke it).
-        for (const e of event.events) pushLog(renderEvent(e, state, meSideIndex));
+        // Log events for this turn (once — polling fallback uses the same
+        // loggedTurns set so we don't double-log).
+        logTurnOnce(event.turn, event.events, state);
         setState((prev) => applyDelta(prev, event.delta));
         break;
       }
@@ -202,6 +218,13 @@ export function BattleScreen({
     if (mustSwitch && menu !== "switch") setMenu("switch");
   }, [mustSwitch, menu]);
 
+  // Reset intentSent whenever the turn number advances, no matter whether
+  // that came through Pusher or polling. Prevents the "WAITING FOR OPPONENT"
+  // banner from getting stuck after state already moved on.
+  useEffect(() => {
+    setIntentSent(false);
+  }, [state.turn]);
+
   return (
     <div className="space-y-4">
       {/* Mobile: opponent stacks on top (DOM order). Desktop: YOU on left,
@@ -264,35 +287,52 @@ export function BattleScreen({
 
           {menu === "moves" ? (
             <div className="grid grid-cols-2 gap-2">
-              {me.moves.map((slot, i) => (
-                <Button
-                  key={i}
-                  variant="outline"
-                  disabled={
-                    submitting || intentSent || slot.ppLeft <= 0 || me.currentHp <= 0
-                  }
-                  onClick={() =>
-                    submitIntent({
-                      kind: "move",
-                      playerId: mySide.playerId,
-                      moveIndex: i,
-                    })
-                  }
-                  className="justify-between h-auto py-2 text-left"
-                >
-                  <div>
-                    <div className="font-medium">{slot.move.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {slot.move.type} · {slot.move.category}
-                      {slot.move.power ? ` · ${slot.move.power}BP` : ""}
-                      {slot.isTm ? " · TM" : ""}
+              {me.moves.map((slot, i) => {
+                const effectTag = slot.move.effect
+                  ? ` · effect: ${slot.move.effect.replace(/_/g, " ")}`
+                  : "";
+                const tooltip = `${slot.move.name}\n${slot.move.flavor}\n\n${slot.move.type} · ${slot.move.category}${
+                  slot.move.power ? ` · ${slot.move.power} BP` : ""
+                } · ${slot.move.accuracy}% accuracy · ${slot.ppLeft}/${slot.move.pp} PP${
+                  slot.isTm ? " · TM (0.85× dmg)" : ""
+                }${effectTag}`;
+                return (
+                  <Button
+                    key={i}
+                    variant="outline"
+                    title={tooltip}
+                    disabled={
+                      submitting || intentSent || slot.ppLeft <= 0 || me.currentHp <= 0
+                    }
+                    onClick={() =>
+                      submitIntent({
+                        kind: "move",
+                        playerId: mySide.playerId,
+                        moveIndex: i,
+                      })
+                    }
+                    className="justify-between h-auto py-2 text-left group/move"
+                  >
+                    <div className="min-w-0">
+                      <div className="font-medium flex items-center gap-1.5">
+                        {slot.move.name}
+                        <Info className="size-3 opacity-40 group-hover/move:opacity-80 transition-opacity shrink-0" />
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {slot.move.type} · {slot.move.category}
+                        {slot.move.power ? ` · ${slot.move.power}BP` : ""}
+                        {slot.isTm ? " · TM" : ""}
+                      </div>
+                      <div className="text-xs text-muted-foreground/80 truncate mt-0.5 italic">
+                        {slot.move.flavor}
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-xs tabular-nums">
-                    {slot.ppLeft}/{slot.move.pp}
-                  </div>
-                </Button>
-              ))}
+                    <div className="text-xs tabular-nums shrink-0 ml-2">
+                      {slot.ppLeft}/{slot.move.pp}
+                    </div>
+                  </Button>
+                );
+              })}
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-2">
@@ -577,8 +617,17 @@ function TurnTimer({
 }
 
 function EventLog({ log }: { log: LogLine[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  // Auto-scroll to the newest line whenever the log grows.
+  useEffect(() => {
+    const el = ref.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [log.length]);
   return (
-    <div className="rounded-lg border p-3 h-48 overflow-auto text-xs font-mono space-y-0.5">
+    <div
+      ref={ref}
+      className="rounded-lg border p-3 h-56 overflow-auto text-sm font-mono space-y-0.5 bg-muted/20"
+    >
       {log.length === 0 ? (
         <div className="text-muted-foreground">Battle log — events will appear here.</div>
       ) : (

@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
 import { getState, isBattleParticipant } from "@/lib/battle/session";
+import { db } from "@/lib/db/client";
+import { battles, type TurnLogEntry } from "@/lib/db/schema";
 
 /** Client polling fallback for when Pusher isn't configured or drops events. */
 export async function GET(
@@ -29,7 +32,20 @@ export async function GET(
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  // Slim projection — same shape as SlimTurnDelta, plus deadline + phase.
+  // Recent turn events from the persisted log so polling clients can replay
+  // any events they missed (e.g. when Pusher drops the live stream).
+  const [battleRow] = await db
+    .select({ turnLog: battles.turnLog })
+    .from(battles)
+    .where(eq(battles.id, battleId))
+    .limit(1);
+  const turnLog = (battleRow?.turnLog ?? []) as TurnLogEntry[];
+  const recentTurns = turnLog.slice(-8).map((t) => ({
+    turn: t.turn,
+    events: t.events,
+  }));
+
+  // Slim projection — same shape as SlimTurnDelta, plus deadline + phase + recent events.
   return NextResponse.json({
     turn: state.turn,
     winnerId: state.winnerId,
@@ -48,5 +64,6 @@ export async function GET(
         ppLeft: c.moves.map((m) => m.ppLeft),
       })),
     })),
+    recentTurns,
   });
 }
