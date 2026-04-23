@@ -376,11 +376,17 @@ export async function createQuickSoloBattleAction(
   const ownSide = await hydrateSingleCard(cardId, userId);
   if ("code" in ownSide) redirect(`/battle/new?error=own-team-${ownSide.code}`);
 
+  // Mirror-side cards need fresh cardIds so they don't collide with ownSide's
+  // in the event log and animation-keying. (Without this, sideIndexOf can't
+  // tell which side a given cardId belongs to and the log reads
+  // "You used X on You".)
   const mirrorSide = {
     ...ownSide,
     playerId: `mirror:${userId}`,
     team: ownSide.team.map((c) => ({
       ...c,
+      cardId: `mirror-${c.cardId}`,
+      personName: c.personName,
       currentHp: c.maxHp,
       moves: c.moves.map((m) => ({ ...m, ppLeft: m.move.pp })),
     })),
@@ -412,11 +418,17 @@ export async function createSoloTestBattleAction(formData: FormData): Promise<ne
 
   // Mirror side: same team cards but fresh HP, opponentId = same userId tagged.
   // For dev only — a real battle can't have both sides as the same player.
+  // Mirror-side cards need fresh cardIds so they don't collide with ownSide's
+  // in the event log and animation-keying. (Without this, sideIndexOf can't
+  // tell which side a given cardId belongs to and the log reads
+  // "You used X on You".)
   const mirrorSide = {
     ...ownSide,
     playerId: `mirror:${userId}`,
     team: ownSide.team.map((c) => ({
       ...c,
+      cardId: `mirror-${c.cardId}`,
+      personName: c.personName,
       currentHp: c.maxHp,
       moves: c.moves.map((m) => ({ ...m, ppLeft: m.move.pp })),
     })),
