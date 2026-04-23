@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { CreditsBadge } from "@/components/layout/CreditsBadge";
+import { fetchCardMeta } from "@/lib/battle/card-meta";
 import { getState } from "@/lib/battle/session";
 import { listTeamsForUser } from "@/lib/teams/queries";
 import { JoinBattle } from "./JoinBattle";
@@ -104,13 +105,19 @@ export default async function BattlePage({ params, searchParams }: PageProps) {
       ? 0
       : meSideIndex;
 
+  // Fetch presentation data for every card in both teams so we can render
+  // full PropulseCards in the battle UI (images, stats, type gradient).
+  const allCardIds = state.sides.flatMap((s) => s.team.map((c) => c.cardId));
+  const cardMeta = await fetchCardMeta(allCardIds);
+
   return (
-    <main className="min-h-screen p-4 max-w-4xl mx-auto">
+    <main className="min-h-screen p-4 max-w-5xl mx-auto">
       {header}
       <BattleScreen
         battleId={battleId}
         initialState={state}
         meSideIndex={effectiveMeIndex}
+        cardMeta={cardMeta}
       />
     </main>
   );

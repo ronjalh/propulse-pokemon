@@ -3,7 +3,9 @@ import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 import { CreditsBadge } from "@/components/layout/CreditsBadge";
+import { fetchCardMeta } from "@/lib/battle/card-meta";
 import { getBattleForReplay } from "@/lib/battle/history-queries";
+import type { BattleState } from "@/lib/battle/types";
 import { ReplayViewer } from "./ReplayViewer";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -15,6 +17,10 @@ export default async function ReplayPage({ params }: PageProps) {
 
   const battle = await getBattleForReplay(id, session.user.id);
   if (!battle) notFound();
+
+  const initial = battle.initialState as BattleState;
+  const allCardIds = initial.sides.flatMap((s) => s.team.map((c) => c.cardId));
+  const cardMeta = await fetchCardMeta(allCardIds);
 
   return (
     <main className="min-h-screen p-4 max-w-4xl mx-auto space-y-4">
@@ -37,6 +43,7 @@ export default async function ReplayPage({ params }: PageProps) {
         turnLog={battle.turnLog as never}
         finalState={(battle.finalState ?? battle.initialState) as never}
         meUserId={session.user.id}
+        cardMeta={cardMeta}
       />
     </main>
   );

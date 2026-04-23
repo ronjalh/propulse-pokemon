@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { PropulseCard } from "@/components/card/PropulseCard";
+import type { CardMeta } from "@/lib/battle/card-meta";
 import type { BattleCard, BattleEvent, BattleState } from "@/lib/battle/types";
 
 type TurnLogEntry = {
@@ -16,6 +18,7 @@ type Props = {
   turnLog: TurnLogEntry[];
   finalState: BattleState;
   meUserId: string;
+  cardMeta: Record<string, CardMeta>;
 };
 
 export function ReplayViewer(props: Props) {
@@ -74,8 +77,17 @@ export function ReplayViewer(props: Props) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <ReplayCard label="Opponent" card={opp.team[opp.activeIndex]} alignRight />
-        <ReplayCard label="You" card={me.team[me.activeIndex]} />
+        <ReplayCard
+          label="Opponent"
+          card={opp.team[opp.activeIndex]}
+          meta={props.cardMeta[opp.team[opp.activeIndex]?.cardId ?? ""]}
+          alignRight
+        />
+        <ReplayCard
+          label="You"
+          card={me.team[me.activeIndex]}
+          meta={props.cardMeta[me.team[me.activeIndex]?.cardId ?? ""]}
+        />
       </div>
 
       <div className="rounded-lg border p-3 text-xs font-mono space-y-0.5 max-h-56 overflow-auto">
@@ -112,10 +124,12 @@ export function ReplayViewer(props: Props) {
 function ReplayCard({
   label,
   card,
+  meta,
   alignRight,
 }: {
   label: string;
   card: BattleCard;
+  meta: CardMeta | undefined;
   alignRight?: boolean;
 }) {
   const pct = Math.max(0, (card.currentHp / card.maxHp) * 100);
@@ -123,23 +137,44 @@ function ReplayCard({
     pct > 50 ? "bg-emerald-500" : pct > 20 ? "bg-amber-500" : "bg-destructive";
   return (
     <div
-      className={`rounded-lg border p-3 space-y-2 ${
-        card.currentHp === 0 ? "opacity-50 grayscale" : ""
-      } ${alignRight ? "text-right" : ""}`}
+      className={`rounded-lg border p-3 flex gap-3 ${
+        card.currentHp === 0 ? "opacity-60 grayscale" : ""
+      } ${alignRight ? "flex-row-reverse text-right" : ""}`}
     >
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">
-        {label}
-      </div>
-      <div className="font-semibold">{card.personName}</div>
-      <div className="text-xs text-muted-foreground">
-        {card.types.join(" / ")}
-        {card.status ? ` · ${card.status}` : ""}
-      </div>
-      <div className="h-2 rounded bg-muted overflow-hidden">
-        <div className={`h-full ${barColour}`} style={{ width: `${pct}%` }} />
-      </div>
-      <div className="text-xs tabular-nums">
-        {card.currentHp} / {card.maxHp} HP
+      {meta && (
+        <div className="shrink-0">
+          <PropulseCard
+            size="sm"
+            card={{ id: meta.cardId, isShiny: meta.isShiny, ivs: meta.ivs }}
+            person={{
+              name: meta.personName,
+              title: meta.title,
+              imageUrl: meta.imageUrl,
+              discipline: meta.discipline as never,
+              subDiscipline: meta.subDiscipline,
+              primaryType: meta.primaryType as never,
+              secondaryType: meta.secondaryType as never,
+              baseStats: meta.baseStats,
+              rarity: meta.rarity,
+            }}
+          />
+        </div>
+      )}
+      <div className="flex-1 min-w-0 space-y-2">
+        <div className="text-xs uppercase tracking-wide text-muted-foreground">
+          {label}
+        </div>
+        <div className="font-semibold truncate">{card.personName}</div>
+        <div className="text-xs text-muted-foreground">
+          {card.types.join(" / ")}
+          {card.status ? ` · ${card.status}` : ""}
+        </div>
+        <div className="h-2 rounded bg-muted overflow-hidden">
+          <div className={`h-full ${barColour}`} style={{ width: `${pct}%` }} />
+        </div>
+        <div className="text-xs tabular-nums">
+          {card.currentHp} / {card.maxHp} HP
+        </div>
       </div>
     </div>
   );
