@@ -5,6 +5,32 @@ import { AnimatePresence, motion, useAnimate } from "framer-motion";
 import { Info, Skull } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+const STATUS_COLORS: Record<string, string> = {
+  poison: "text-purple-400",
+  burn: "text-orange-500",
+  paralysis: "text-yellow-400",
+  sleep: "text-indigo-400",
+  freeze: "text-cyan-400",
+  confusion: "text-pink-400",
+};
+
+/** Ring/shadow classes used as a pulsing glow on a card when a status is
+ *  inflicted. Animates for ~1.8s via the `animate-pulse` utility. */
+const STATUS_GLOW_CLASSES: Record<string, string> = {
+  poison:
+    "ring-4 ring-purple-400/70 shadow-[0_0_24px_rgba(168,85,247,0.5)] animate-pulse",
+  burn:
+    "ring-4 ring-orange-500/70 shadow-[0_0_24px_rgba(249,115,22,0.5)] animate-pulse",
+  paralysis:
+    "ring-4 ring-yellow-400/70 shadow-[0_0_24px_rgba(250,204,21,0.5)] animate-pulse",
+  sleep:
+    "ring-4 ring-indigo-400/70 shadow-[0_0_24px_rgba(129,140,248,0.5)] animate-pulse",
+  freeze:
+    "ring-4 ring-cyan-400/70 shadow-[0_0_24px_rgba(34,211,238,0.5)] animate-pulse",
+  confusion:
+    "ring-4 ring-pink-400/70 shadow-[0_0_24px_rgba(244,114,182,0.5)] animate-pulse",
+};
+
 import { Button } from "@/components/ui/button";
 import { PropulseCard } from "@/components/card/PropulseCard";
 import { abandonBattleAction } from "@/lib/battle/actions";
@@ -82,25 +108,42 @@ export function BattleScreen({
    *  polling don't both log the same turn. */
   const loggedTurnsRef = useRef<Set<number>>(new Set());
 
-  /** Per-card hit animation trigger. `key` increments to retrigger Framer
-   *  Motion. `amount` drives the floating damage number. */
-  const [hits, setHits] = useState<
-    Record<string, { amount: number; key: number }>
-  >({});
-  const hitSeq = useRef(0);
-  function triggerHit(cardId: string, amount: number) {
-    hitSeq.current += 1;
-    const key = hitSeq.current;
-    setHits((h) => ({ ...h, [cardId]: { amount, key } }));
-    // Clear after 1.5s so AnimatePresence removes the motion-div cleanly.
+  /** Per-card flash animation — floating text + optional shake. Used for
+   *  every visible engine event so users see something, not just damage. */
+  type Flash = {
+    text: string;
+    color: string;
+    shake: boolean;
+    /** If set, the card pulses with a ring of this status's color. */
+    glow: string | null;
+    key: number;
+  };
+  const [flashes, setFlashes] = useState<Record<string, Flash>>({});
+  const flashSeq = useRef(0);
+  function triggerFlash(
+    cardId: string,
+    opts: { text: string; color: string; shake?: boolean; glow?: string | null },
+  ) {
+    flashSeq.current += 1;
+    const key = flashSeq.current;
+    setFlashes((f) => ({
+      ...f,
+      [cardId]: {
+        text: opts.text,
+        color: opts.color,
+        shake: opts.shake ?? false,
+        glow: opts.glow ?? null,
+        key,
+      },
+    }));
     setTimeout(() => {
-      setHits((h) => {
-        if (h[cardId]?.key !== key) return h;
-        const next = { ...h };
+      setFlashes((f) => {
+        if (f[cardId]?.key !== key) return f;
+        const next = { ...f };
         delete next[cardId];
         return next;
       });
-    }, 1500);
+    }, 1800);
   }
 
   function pushLog(text: string) {
@@ -117,15 +160,81 @@ export function BattleScreen({
     loggedTurnsRef.current.add(turn);
     for (const e of events) {
       pushLog(renderEvent(e, stateForNames, meSideIndex));
-      // Trigger hit animation for damage events so the target card shakes
-      // and a floating damage number appears.
-      if (e.kind === "move-used" && e.damage > 0) {
-        triggerHit(e.targetId, e.damage);
-      } else if (e.kind === "status-tick" && e.damage > 0) {
-        triggerHit(e.actorId, e.damage);
-      } else if (e.kind === "hurt-in-confusion" && e.damage > 0) {
-        triggerHit(e.actorId, e.damage);
+      flashForEvent(e);
+    }
+  }
+
+  function flashForEvent(e: BattleEvent) {
+    switch (e.kind) {
+      case "move-used":
+        if (e.damage > 0) {
+          triggerFlash(e.targetId, {
+            text: `-${e.damage}`,
+            color: "text-rose-500",
+            shake: true,
+          });
+        }
+        break;
+      case "miss":
+        // Miss: floating text only, no shake — nothing actually hit.
+        triggerFlash(e.actorId, {
+          text: "Missed!",
+          color: "text-muted-foreground",
+        });
+        break;
+      case "no-effect": {
+        const labels: Record<string, string> = {
+          immune: "Immune!",
+          "no-pp": "No PP!",
+          "status-failed": "Already affected",
+          "no-handler": "Fizzled",
+          "invalid-slot": "Fumbled",
+        };
+        triggerFlash(e.actorId, {
+          text: labels[e.reason ?? ""] ?? "No effect",
+          color: "text-muted-foreground",
+        });
+        break;
       }
+      case "status-inflicted":
+        triggerFlash(e.actorId, {
+          text: `${e.status[0].toUpperCase()}${e.status.slice(1)}!`,
+          color: STATUS_COLORS[e.status] ?? "text-foreground",
+          glow: e.status, // pulsing colored ring around the card
+        });
+        break;
+      case "status-tick":
+        if (e.damage > 0) {
+          triggerFlash(e.actorId, {
+            text: `-${e.damage}`,
+            color: STATUS_COLORS[e.status] ?? "text-rose-500",
+            shake: true,
+          });
+        }
+        break;
+      case "hurt-in-confusion":
+        if (e.damage > 0) {
+          triggerFlash(e.actorId, {
+            text: `-${e.damage} (confused)`,
+            color: "text-pink-400",
+            shake: true,
+          });
+        }
+        break;
+      case "cant-move": {
+        const reasonMap: Record<string, string> = {
+          paralysis: "Paralyzed!",
+          sleep: "Asleep!",
+          freeze: "Frozen!",
+          confusion: "Confused!",
+        };
+        triggerFlash(e.actorId, {
+          text: reasonMap[e.reason] ?? "Can't move",
+          color: STATUS_COLORS[e.reason as keyof typeof STATUS_COLORS] ?? "text-muted-foreground",
+        });
+        break;
+      }
+      // switch-in / faint / battle-ended: log only, no card-level flash.
     }
   }
 
@@ -275,7 +384,10 @@ export function BattleScreen({
             battleSide={oppSide}
             meta={cardMeta[opp.cardId]}
             opponentInfo={opponentInfo}
-            hit={hits[opp.cardId]}
+            flash={flashes[opp.cardId]}
+            // Opponent panel "pops" when we've submitted and are waiting
+            // for them — signals "it's their turn now".
+            isActive={!ended && intentSent && !mustSwitch}
           />
         </div>
         <div className="md:order-1">
@@ -284,7 +396,9 @@ export function BattleScreen({
             card={me}
             battleSide={mySide}
             meta={cardMeta[me.cardId]}
-            hit={hits[me.cardId]}
+            flash={flashes[me.cardId]}
+            // Your panel "pops" when it's your turn to act.
+            isActive={!ended && !intentSent}
           />
         </div>
       </div>
@@ -435,60 +549,78 @@ function CardPanel({
   battleSide,
   meta,
   opponentInfo,
-  hit,
+  flash,
+  isActive = false,
 }: {
   side: "opponent" | "me";
   card: BattleCard;
   battleSide: BattleSide;
   meta: CardMeta | undefined;
   opponentInfo?: OpponentInfo;
-  hit?: { amount: number; key: number };
+  flash?: {
+    text: string;
+    color: string;
+    shake: boolean;
+    glow: string | null;
+    key: number;
+  };
+  isActive?: boolean;
 }) {
   const pct = Math.max(0, (card.currentHp / card.maxHp) * 100);
   const barColour =
     pct > 50 ? "bg-emerald-500" : pct > 20 ? "bg-amber-500" : "bg-destructive";
 
-  // Clearly-different tints so you never confuse the two panels.
-  const themeClass =
-    side === "opponent"
-      ? "border-rose-500/40 bg-rose-500/10"
-      : "border-sky-500/40 bg-sky-500/10";
+  // Clearly-different tints so you never confuse the two panels. When it's
+  // THIS side's turn, bump border strength + add a subtle glow so the active
+  // side is always obvious at a glance.
+  const tintKind = side === "opponent" ? "rose" : "sky";
+  const themeClass = isActive
+    ? side === "opponent"
+      ? "border-rose-500/80 bg-rose-500/10 ring-2 ring-rose-400/50 shadow-[0_0_20px_rgba(244,63,94,0.25)]"
+      : "border-sky-500/80 bg-sky-500/10 ring-2 ring-sky-400/50 shadow-[0_0_20px_rgba(14,165,233,0.25)]"
+    : side === "opponent"
+      ? "border-rose-500/30 bg-rose-500/5"
+      : "border-sky-500/30 bg-sky-500/5";
   const headerLabel = side === "opponent" ? "Opponent" : "You";
 
-  // Imperative shake — useAnimate animates the existing DOM node instead of
-  // remounting it on hit. Keeps CardPanel's DOM stable so state updates
-  // (HP bar, banner, disabled state) propagate without interference.
+  // Status-inflicted glow: pulsing colored ring on top of the normal border.
+  const glowClass = flash?.glow
+    ? STATUS_GLOW_CLASSES[flash.glow] ?? ""
+    : "";
+  void tintKind;
+
+  // Imperative shake when flash.shake is true — preserves outer DOM so state
+  // updates propagate cleanly (HP bar animates, banner flips, etc.).
   const [scope, animate] = useAnimate<HTMLDivElement>();
   useEffect(() => {
-    if (!hit) return;
+    if (!flash?.shake) return;
     animate(
       scope.current,
       { x: [0, -6, 5, -4, 3, -2, 0] },
       { duration: 0.45, ease: "easeInOut" },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hit?.key]);
+  }, [flash?.key]);
 
   return (
     <div
       ref={scope}
-      className={`relative rounded-lg border-2 p-3 flex gap-3 ${themeClass} ${
+      className={`relative rounded-lg border-2 p-3 flex gap-3 transition-[box-shadow,border-color] duration-300 ${themeClass} ${glowClass} ${
         card.currentHp === 0 ? "opacity-60 grayscale" : ""
       } ${side === "opponent" ? "flex-row-reverse text-right" : ""}`}
     >
-      {/* Floating damage number on hit. Keyed on hit.key so each new hit gets
-          its own mount/unmount cycle via AnimatePresence. */}
+      {/* Floating flash — damage number, "Missed!", "Paralyzed!", etc. */}
       <AnimatePresence>
-        {hit && (
+        {flash && (
           <motion.div
-            key={hit.key}
+            key={flash.key}
             initial={{ opacity: 0, y: 10, scale: 0.8 }}
             animate={{ opacity: 1, y: -40, scale: 1.15 }}
             exit={{ opacity: 0, y: -60 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
-            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 z-20 text-3xl font-black text-rose-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
+            className={`pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 z-20 whitespace-nowrap text-2xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] ${flash.color}`}
           >
-            -{hit.amount}
+            {flash.text}
           </motion.div>
         )}
       </AnimatePresence>
