@@ -16,6 +16,7 @@ import { auth } from "@/auth";
 import { signOutAction } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
 import { CreditsBadge } from "@/components/layout/CreditsBadge";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { PropulseLogo } from "@/components/icons/PropulseLogo";
 import { TreasureChest } from "@/components/icons/TreasureChest";
 import { db } from "@/lib/db/client";
@@ -75,6 +76,7 @@ export default async function HomePage() {
         </Link>
         <div className="flex items-center gap-2">
           <CreditsBadge userId={userId} />
+          <ThemeToggle />
           <form action={signOutAction}>
             <Button type="submit" variant="ghost" size="sm">
               Sign out
