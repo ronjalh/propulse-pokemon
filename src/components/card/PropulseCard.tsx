@@ -144,7 +144,7 @@ export function PropulseCard({ card, person, size = "md" }: Props) {
         <StatRow label="DEF" value={final.defense} max={180} />
         <StatRow label="SpA" value={final.spAttack} max={180} />
         <StatRow label="SpD" value={final.spDefense} max={180} />
-        <StatRow label="SPD" value={final.speed} max={180} />
+        <StatRow label="SPE" value={final.speed} max={180} />
       </div>
 
       {/* footer */}
