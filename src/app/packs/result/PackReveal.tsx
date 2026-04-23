@@ -17,7 +17,7 @@ export function PackReveal({ pairs }: { pairs: Pair[] }) {
           animate={{ opacity: 1, y: 0 }}
           className="text-center text-pink-500 font-bold"
         >
-          ✨ {shinyCount} Feminist{shinyCount > 1 ? "s" : ""}! ✨
+          ✨ {shinyCount} Shin{shinyCount > 1 ? "ies" : "y"}! ✨
         </motion.div>
       )}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 justify-items-center">

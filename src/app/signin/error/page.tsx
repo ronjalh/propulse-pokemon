@@ -22,7 +22,9 @@ export default async function AuthErrorPage({ searchParams }: PageProps) {
       <div className="w-full max-w-sm space-y-4 text-center">
         <h1 className="text-2xl font-bold tracking-tight">Sign-in failed</h1>
         <p className="text-muted-foreground text-sm">{message}</p>
-        <Button render={<Link href="/signin" />}>Try again</Button>
+        <Button render={<Link href="/signin" />} nativeButton={false}>
+          Try again
+        </Button>
       </div>
     </main>
   );
