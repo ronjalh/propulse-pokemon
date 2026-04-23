@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import { AnimatePresence, motion, useAnimate } from "framer-motion";
-import { Info, Skull } from "lucide-react";
+import { Info, Skull, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { describeEffect } from "@/lib/battle/move-info";
 
 const STATUS_COLORS: Record<string, string> = {
   poison: "text-purple-400",
@@ -35,7 +36,7 @@ import { Button } from "@/components/ui/button";
 import { PropulseCard } from "@/components/card/PropulseCard";
 import { abandonBattleAction } from "@/lib/battle/actions";
 import type { CardMeta } from "@/lib/battle/card-meta";
-import type { BattleCard, BattleEvent, BattleSide, BattleState, Intent } from "@/lib/battle/types";
+import type { BattleCard, BattleEvent, BattleSide, BattleState, Intent, MoveSlot } from "@/lib/battle/types";
 import { useBattleChannel } from "@/lib/realtime/client";
 import type { BattleEventPayload, SlimTurnDelta } from "@/lib/realtime/events";
 
@@ -98,11 +99,10 @@ export function BattleScreen({
   const [error, setError] = useState<string | null>(null);
   const [menu, setMenu] = useState<"moves" | "switch">("moves");
   /** The turn number we've already submitted an intent for. Derived banner-
-   *  state: submittedTurn === state.turn → waiting; otherwise → your-turn.
-   *  Setting this BEFORE the fetch (not after) closes a race where a fast
-   *  server resolution pushed state.turn forward before the fetch returned,
-   *  leaving the banner stuck on "WAITING". */
+   *  state: submittedTurn === state.turn → waiting; otherwise → your-turn. */
   const [submittedTurn, setSubmittedTurn] = useState<number | null>(null);
+  /** When set, shows the move-info modal for this move slot. */
+  const [infoMoveSlot, setInfoMoveSlot] = useState<MoveSlot | null>(null);
   const logSeq = useRef(0);
   /** Track which turn numbers we've already shown events for so Pusher and
    *  polling don't both log the same turn. */
@@ -297,6 +297,18 @@ export function BattleScreen({
         break;
       }
       case "battle-ended":
+        // One last fetch so any turn-resolved we dropped right before the
+        // battle ended still gets logged (polling exits once winnerId is
+        // set, so we need this explicit catch-up).
+        fetch(`/api/battle/${battleId}/state`, { cache: "no-store" })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((slim) => {
+            if (!slim?.recentTurns?.length) return;
+            for (const t of slim.recentTurns) {
+              logTurnOnce(t.turn, t.events as BattleEvent[], state);
+            }
+          })
+          .catch(() => {});
         pushLog(`Battle ended — winner: ${event.winnerId}`);
         setState((prev) => ({ ...prev, winnerId: event.winnerId }));
         break;
@@ -442,49 +454,51 @@ export function BattleScreen({
           {menu === "moves" ? (
             <div className="grid grid-cols-2 gap-2">
               {me.moves.map((slot, i) => {
-                const effectTag = slot.move.effect
-                  ? ` · effect: ${slot.move.effect.replace(/_/g, " ")}`
-                  : "";
-                const tooltip = `${slot.move.name}\n${slot.move.flavor}\n\n${slot.move.type} · ${slot.move.category}${
-                  slot.move.power ? ` · ${slot.move.power} BP` : ""
-                } · ${slot.move.accuracy}% accuracy · ${slot.ppLeft}/${slot.move.pp} PP${
-                  slot.isTm ? " · TM (0.85× dmg)" : ""
-                }${effectTag}`;
                 return (
-                  <Button
-                    key={i}
-                    variant="outline"
-                    title={tooltip}
-                    disabled={
-                      submitting || intentSent || slot.ppLeft <= 0 || me.currentHp <= 0
-                    }
-                    onClick={() =>
-                      submitIntent({
-                        kind: "move",
-                        playerId: mySide.playerId,
-                        moveIndex: i,
-                      })
-                    }
-                    className="justify-between h-auto py-2 text-left group/move"
-                  >
-                    <div className="min-w-0">
-                      <div className="font-medium flex items-center gap-1.5">
-                        {slot.move.name}
-                        <Info className="size-3 opacity-40 group-hover/move:opacity-80 transition-opacity shrink-0" />
+                  <div key={i} className="relative">
+                    <Button
+                      variant="outline"
+                      disabled={
+                        submitting || intentSent || slot.ppLeft <= 0 || me.currentHp <= 0
+                      }
+                      onClick={() =>
+                        submitIntent({
+                          kind: "move",
+                          playerId: mySide.playerId,
+                          moveIndex: i,
+                        })
+                      }
+                      className="w-full justify-between h-auto py-2 text-left pr-10"
+                    >
+                      <div className="min-w-0">
+                        <div className="font-medium">{slot.move.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {slot.move.type} · {slot.move.category}
+                          {slot.move.power ? ` · ${slot.move.power}BP` : ""}
+                          {slot.isTm ? " · TM" : ""}
+                        </div>
+                        <div className="text-xs text-muted-foreground/80 truncate mt-0.5 italic">
+                          {slot.move.flavor}
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {slot.move.type} · {slot.move.category}
-                        {slot.move.power ? ` · ${slot.move.power}BP` : ""}
-                        {slot.isTm ? " · TM" : ""}
+                      <div className="text-xs tabular-nums shrink-0 ml-2">
+                        {slot.ppLeft}/{slot.move.pp}
                       </div>
-                      <div className="text-xs text-muted-foreground/80 truncate mt-0.5 italic">
-                        {slot.move.flavor}
-                      </div>
-                    </div>
-                    <div className="text-xs tabular-nums shrink-0 ml-2">
-                      {slot.ppLeft}/{slot.move.pp}
-                    </div>
-                  </Button>
+                    </Button>
+                    {/* Info button — separate element so tap doesn't submit. */}
+                    <button
+                      type="button"
+                      aria-label={`Info about ${slot.move.name}`}
+                      title="What does this move do?"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInfoMoveSlot(slot);
+                      }}
+                      className="absolute top-1.5 right-1.5 z-10 p-1.5 rounded-full bg-background/80 hover:bg-background border text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Info className="size-4" />
+                    </button>
+                  </div>
                 );
               })}
             </div>
@@ -539,6 +553,105 @@ export function BattleScreen({
           </Button>
         </form>
       )}
+
+      {/* Move-info modal */}
+      <AnimatePresence>
+        {infoMoveSlot && (
+          <MoveInfoModal slot={infoMoveSlot} onClose={() => setInfoMoveSlot(null)} />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function MoveInfoModal({
+  slot,
+  onClose,
+}: {
+  slot: MoveSlot;
+  onClose: () => void;
+}) {
+  const { move, ppLeft, isTm } = slot;
+  const effect = describeEffect(move.effect);
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 20, scale: 0.97 }}
+        transition={{ duration: 0.2 }}
+        className="relative w-full max-w-md rounded-xl border-2 bg-background p-5 shadow-2xl space-y-3"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={onClose}
+          className="absolute top-3 right-3 p-1 rounded-full hover:bg-muted"
+        >
+          <X className="size-5" />
+        </button>
+
+        <div>
+          <div className="text-2xl font-bold tracking-tight">{move.name}</div>
+          <div className="text-sm text-muted-foreground italic mt-0.5">
+            &ldquo;{move.flavor}&rdquo;
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <InfoRow label="Type" value={move.type} />
+          <InfoRow label="Category" value={move.category} />
+          <InfoRow
+            label="Power"
+            value={move.power != null ? String(move.power) : "—"}
+          />
+          <InfoRow label="Accuracy" value={`${move.accuracy}%`} />
+          <InfoRow label="PP" value={`${ppLeft}/${move.pp}`} />
+          <InfoRow
+            label="Priority"
+            value={move.priority !== 0 ? `+${move.priority}` : "normal"}
+          />
+        </div>
+
+        {isTm && (
+          <div className="rounded border bg-muted/40 p-2 text-xs">
+            <b>TM-learned</b> — this move deals 0.85× damage since it&rsquo;s
+            outside this card&rsquo;s native type.
+          </div>
+        )}
+
+        <div className="rounded-lg border p-3 space-y-1">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">
+            Effect
+          </div>
+          <div className="text-sm">{effect.text}</div>
+          {!effect.implemented && (
+            <div className="text-xs text-amber-600 dark:text-amber-400">
+              ⚠ Not yet honoured by the battle engine — coming in a future
+              update.
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded border p-2">
+      <div className="text-xs uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
+      <div className="font-medium">{value}</div>
     </div>
   );
 }
@@ -605,11 +718,11 @@ function CardPanel({
   return (
     <div
       ref={scope}
-      className={`relative rounded-lg border-2 p-3 flex gap-3 transition-[box-shadow,border-color] duration-300 ${themeClass} ${glowClass} ${
-        card.currentHp === 0 ? "opacity-60 grayscale" : ""
-      } ${side === "opponent" ? "flex-row-reverse text-right" : ""}`}
+      className={`relative rounded-lg border-2 p-3 transition-[box-shadow,border-color] duration-300 ${themeClass} ${glowClass}`}
     >
-      {/* Floating flash — damage number, "Missed!", "Paralyzed!", etc. */}
+      {/* Floating flash — damage number, "Missed!", "Paralyzed!", etc.
+          Rendered as a SIBLING of the grayscale-on-faint content so the
+          color stays visible even when the card just got KO'd. */}
       <AnimatePresence>
         {flash && (
           <motion.div
@@ -618,12 +731,18 @@ function CardPanel({
             animate={{ opacity: 1, y: -40, scale: 1.15 }}
             exit={{ opacity: 0, y: -60 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
-            className={`pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 z-20 whitespace-nowrap text-2xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] ${flash.color}`}
+            className={`pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 z-30 whitespace-nowrap text-2xl font-black drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)] ${flash.color}`}
           >
             {flash.text}
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Content wrapper — grayscales when fainted. */}
+      <div
+        className={`flex gap-3 transition-[filter,opacity] duration-300 ${
+          card.currentHp === 0 ? "opacity-60 grayscale" : ""
+        } ${side === "opponent" ? "flex-row-reverse text-right" : ""}`}
+      >
       {meta && (
         <div className="shrink-0">
           <PropulseCard
@@ -676,6 +795,7 @@ function CardPanel({
           {card.currentHp} / {card.maxHp} HP
         </div>
         <TeamRoster side={side} battleSide={battleSide} />
+      </div>
       </div>
     </div>
   );
