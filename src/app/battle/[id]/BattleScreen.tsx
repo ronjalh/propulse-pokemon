@@ -1,32 +1,69 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { PropulseCard } from "@/components/card/PropulseCard";
+import { abandonBattleAction } from "@/lib/battle/actions";
 import type { CardMeta } from "@/lib/battle/card-meta";
 import type { BattleCard, BattleEvent, BattleState, Intent } from "@/lib/battle/types";
 import { useBattleChannel } from "@/lib/realtime/client";
-import type { BattleEventPayload } from "@/lib/realtime/events";
+import type { BattleEventPayload, SlimTurnDelta } from "@/lib/realtime/events";
+
+type OpponentInfo = {
+  displayName: string;
+  imageUrl: string | null;
+  isMirror: boolean;
+};
 
 type Props = {
   battleId: string;
   initialState: BattleState & { phase?: string; deadlineMs?: number };
   meSideIndex: number; // 0 or 1; for mirror, 0
   cardMeta: Record<string, CardMeta>;
+  opponentInfo: OpponentInfo;
 };
 
 type LogLine = { id: number; text: string };
+
+/** Apply a slim delta from Pusher onto a full BattleState kept in client state. */
+function applyDelta(state: BattleState, delta: SlimTurnDelta): BattleState {
+  const sides = state.sides.map((side, idx) => {
+    const slim = delta.sides[idx];
+    if (!slim || slim.playerId !== side.playerId) return side;
+    const team = side.team.map((c) => {
+      const slimCard = slim.team.find((x) => x.cardId === c.cardId);
+      if (!slimCard) return c;
+      return {
+        ...c,
+        currentHp: slimCard.currentHp,
+        status: slimCard.status as BattleCard["status"],
+        volatile: {
+          confusionTurnsLeft: slimCard.confusionTurnsLeft,
+          sleepTurnsLeft: slimCard.sleepTurnsLeft,
+        },
+        moves: c.moves.map((m, i) => ({
+          ...m,
+          ppLeft: slimCard.ppLeft[i] ?? m.ppLeft,
+        })),
+      };
+    });
+    return { ...side, activeIndex: slim.activeIndex, team };
+  }) as [BattleState["sides"][0], BattleState["sides"][1]];
+  return { ...state, turn: delta.turn, winnerId: delta.winnerId, sides };
+}
 
 export function BattleScreen({
   battleId,
   initialState,
   meSideIndex,
   cardMeta,
+  opponentInfo,
 }: Props) {
   const [state, setState] = useState<BattleState>(initialState);
   const [deadlineMs, setDeadlineMs] = useState<number>(
-    (initialState as any).deadlineMs ?? Date.now() + 45_000,
+    (initialState as { deadlineMs?: number }).deadlineMs ?? Date.now() + 45_000,
   );
   const [log, setLog] = useState<LogLine[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -49,11 +86,15 @@ export function BattleScreen({
         pushLog(`Turn ${event.turn} — choose an action.`);
         break;
       case "turn-resolved":
-        setState(event.newState);
-        for (const e of event.events) pushLog(renderEvent(e, event.newState));
+        setState((prev) => {
+          const next = applyDelta(prev, event.delta);
+          for (const e of event.events) pushLog(renderEvent(e, next));
+          return next;
+        });
         break;
       case "battle-ended":
         pushLog(`Battle ended — winner: ${event.winnerId}`);
+        setState((prev) => ({ ...prev, winnerId: event.winnerId }));
         break;
       case "player-disconnected":
         pushLog(`${event.playerId} disconnected`);
@@ -65,7 +106,6 @@ export function BattleScreen({
         pushLog(`${event.playerId} locked in their team.`);
         break;
       default:
-        // Engine events that arrive outside a turn-resolved bundle (rare).
         pushLog(renderEvent(event as BattleEvent, state));
     }
   });
@@ -104,8 +144,13 @@ export function BattleScreen({
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
-        <CardPanel label="Opponent" card={opp} meta={cardMeta[opp.cardId]} alignRight />
-        <CardPanel label="You" card={me} meta={cardMeta[me.cardId]} />
+        <CardPanel
+          side="opponent"
+          card={opp}
+          meta={cardMeta[opp.cardId]}
+          opponentInfo={opponentInfo}
+        />
+        <CardPanel side="me" card={me} meta={cardMeta[me.cardId]} />
       </div>
 
       {ended ? (
@@ -204,29 +249,51 @@ export function BattleScreen({
       )}
 
       <EventLog log={log} />
+
+      {!ended && (
+        <form action={abandonBattleAction} className="flex justify-end">
+          <input type="hidden" name="battleId" value={battleId} />
+          <Button
+            type="submit"
+            variant="ghost"
+            size="sm"
+            className="text-destructive hover:text-destructive"
+          >
+            Abandon battle
+          </Button>
+        </form>
+      )}
     </div>
   );
 }
 
 function CardPanel({
-  label,
+  side,
   card,
   meta,
-  alignRight,
+  opponentInfo,
 }: {
-  label: string;
+  side: "opponent" | "me";
   card: BattleCard;
   meta: CardMeta | undefined;
-  alignRight?: boolean;
+  opponentInfo?: OpponentInfo;
 }) {
   const pct = Math.max(0, (card.currentHp / card.maxHp) * 100);
   const barColour =
     pct > 50 ? "bg-emerald-500" : pct > 20 ? "bg-amber-500" : "bg-destructive";
+
+  // Clearly-different tints so you never confuse the two panels.
+  const themeClass =
+    side === "opponent"
+      ? "border-rose-500/40 bg-rose-500/10"
+      : "border-sky-500/40 bg-sky-500/10";
+  const headerLabel = side === "opponent" ? "Opponent" : "You";
+
   return (
     <div
-      className={`rounded-lg border p-3 flex gap-3 ${
+      className={`rounded-lg border-2 p-3 flex gap-3 ${themeClass} ${
         card.currentHp === 0 ? "opacity-60 grayscale" : ""
-      } ${alignRight ? "flex-row-reverse text-right" : ""}`}
+      } ${side === "opponent" ? "flex-row-reverse text-right" : ""}`}
     >
       {meta && (
         <div className="shrink-0">
@@ -248,8 +315,22 @@ function CardPanel({
         </div>
       )}
       <div className="flex-1 min-w-0 space-y-2">
-        <div className="text-xs uppercase tracking-wide text-muted-foreground">
-          {label}
+        <div
+          className={`flex items-center gap-2 ${side === "opponent" ? "flex-row-reverse" : ""}`}
+        >
+          {side === "opponent" && opponentInfo && (
+            <OpponentAvatar info={opponentInfo} />
+          )}
+          <div className={side === "opponent" ? "text-right" : ""}>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">
+              {headerLabel}
+            </div>
+            {side === "opponent" && opponentInfo && (
+              <div className="text-sm font-medium truncate max-w-[12rem]">
+                {opponentInfo.displayName}
+              </div>
+            )}
+          </div>
         </div>
         <div className="font-semibold truncate">{card.personName}</div>
         <div className="text-xs text-muted-foreground">
@@ -266,6 +347,29 @@ function CardPanel({
           {card.currentHp} / {card.maxHp} HP
         </div>
       </div>
+    </div>
+  );
+}
+
+function OpponentAvatar({ info }: { info: OpponentInfo }) {
+  const letter = (info.displayName.trim()[0] ?? "?").toUpperCase();
+  if (info.imageUrl) {
+    return (
+      <Image
+        src={info.imageUrl}
+        alt={info.displayName}
+        width={40}
+        height={40}
+        className="rounded-full ring-2 ring-rose-400/60 shrink-0"
+      />
+    );
+  }
+  return (
+    <div
+      aria-hidden
+      className="w-10 h-10 rounded-full bg-rose-500/30 ring-2 ring-rose-400/60 flex items-center justify-center text-sm font-bold shrink-0"
+    >
+      {letter}
     </div>
   );
 }

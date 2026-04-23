@@ -8,7 +8,27 @@ import {
   persistTurn,
 } from "./persist";
 import type { BattleSide, BattleState, Intent } from "./types";
+import type { SlimTurnDelta } from "@/lib/realtime/events";
 import { publishBattleEvent } from "@/lib/realtime/server";
+
+function slimStateFor(state: BattleState): SlimTurnDelta {
+  return {
+    turn: state.turn,
+    winnerId: state.winnerId,
+    sides: state.sides.map((s) => ({
+      playerId: s.playerId,
+      activeIndex: s.activeIndex,
+      team: s.team.map((c) => ({
+        cardId: c.cardId,
+        currentHp: c.currentHp,
+        status: c.status,
+        confusionTurnsLeft: c.volatile.confusionTurnsLeft,
+        sleepTurnsLeft: c.volatile.sleepTurnsLeft,
+        ppLeft: c.moves.map((m) => m.ppLeft),
+      })),
+    })) as SlimTurnDelta["sides"],
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Redis-backed battle session store
@@ -298,13 +318,6 @@ export async function submitIntent(
     stateAfter: result.newState,
   });
 
-  await publishBattleEvent(battleId, {
-    kind: "turn-resolved",
-    turn: state.turn,
-    events: result.events,
-    newState: result.newState,
-  });
-
   if (next.winnerId) {
     await persistBattleEnd(battleId, result.newState);
     await publishBattleEvent(battleId, {
@@ -368,6 +381,60 @@ export async function enforceTurnTimeout(battleId: string): Promise<
   });
 
   return { status: "forfeit", forfeiterId };
+}
+
+/**
+ * Abandon an active battle — forfeits the caller (opponent wins). Safe to
+ * call from a panic-button server action when the UI glitches out or the
+ * turn timer isn't triggering. No-ops on already-ended battles.
+ */
+export async function abandonBattle(
+  battleId: string,
+  userId: string,
+): Promise<
+  | { ok: true; winnerId: string | null }
+  | { ok: false; reason: string }
+> {
+  const state = await getState(battleId);
+  if (!state) return { ok: false, reason: "no-such-battle" };
+  if (state.winnerId || state.phase === "ended") {
+    return { ok: true, winnerId: state.winnerId };
+  }
+  const mySideIndex = state.sides.findIndex((s) => s.playerId === userId);
+  const isMirrorOwner =
+    mySideIndex === -1 && state.sides[1].playerId === `mirror:${userId}`;
+  if (mySideIndex === -1 && !isMirrorOwner) {
+    return { ok: false, reason: "not-a-participant" };
+  }
+  const forfeiterSideIndex = isMirrorOwner ? 0 : mySideIndex;
+  const winnerSide = state.sides[1 - forfeiterSideIndex];
+  const winnerId = winnerSide.playerId.startsWith("mirror:")
+    ? null
+    : winnerSide.playerId;
+
+  const next: VersionedState = {
+    ...state,
+    winnerId,
+    phase: "ended",
+    version: state.version + 1,
+    deadlineMs: Date.now(),
+    pendingOpponent: null,
+  };
+  const casRes = await cas(battleId, state.version, next);
+  if (!casRes.ok) return { ok: false, reason: "race-lost" };
+
+  // Clear any pending intent keys for good measure.
+  const keys = state.sides.map((s) =>
+    intentKey(battleId, state.turn, s.playerId),
+  );
+  await redis().del(...keys).catch(() => {});
+
+  await persistBattleEnd(battleId, next);
+  await publishBattleEvent(battleId, {
+    kind: "battle-ended",
+    winnerId: winnerId ?? state.sides[0].playerId,
+  });
+  return { ok: true, winnerId };
 }
 
 // Re-export for callers that want to compose their own flow.

@@ -9,6 +9,7 @@ import { users } from "@/lib/db/schema";
 import { hashSeed } from "./rng";
 import { hydrateSide } from "./hydrate";
 import {
+  abandonBattle,
   createPendingBattle,
   createBattle,
   getState,
@@ -113,6 +114,16 @@ export async function joinBattleAction(formData: FormData): Promise<never> {
   if (!result.ok) redirect(`/battle/${battleId}?error=${result.reason}`);
 
   redirect(`/battle/${battleId}`);
+}
+
+/** Panic button: end a battle you're stuck in. Abandoner forfeits. */
+export async function abandonBattleAction(formData: FormData): Promise<never> {
+  const session = await auth();
+  if (!session?.user) redirect("/signin");
+  const battleId = String(formData.get("battleId") ?? "");
+  if (!battleId) redirect("/");
+  await abandonBattle(battleId, session.user.id);
+  redirect("/battle/history");
 }
 
 /** Start a solo test battle vs a mirror copy of your own team (dev aid). */

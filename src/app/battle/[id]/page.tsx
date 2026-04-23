@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
 import { CreditsBadge } from "@/components/layout/CreditsBadge";
 import { fetchCardMeta } from "@/lib/battle/card-meta";
 import { getState } from "@/lib/battle/session";
+import { db } from "@/lib/db/client";
+import { users } from "@/lib/db/schema";
 import { listTeamsForUser } from "@/lib/teams/queries";
 import { JoinBattle } from "./JoinBattle";
 import { BattleScreen } from "./BattleScreen";
@@ -110,6 +113,41 @@ export default async function BattlePage({ params, searchParams }: PageProps) {
   const allCardIds = state.sides.flatMap((s) => s.team.map((c) => c.cardId));
   const cardMeta = await fetchCardMeta(allCardIds);
 
+  // Opponent profile for the battle header (name/avatar).
+  const oppPlayerId = state.sides[1 - effectiveMeIndex].playerId;
+  const isMirror = oppPlayerId.startsWith("mirror:");
+  const isPendingEmail = oppPlayerId.startsWith("pending:");
+  let opponentInfo: {
+    displayName: string;
+    imageUrl: string | null;
+    isMirror: boolean;
+  };
+  if (isMirror) {
+    opponentInfo = {
+      displayName: "Mirror (you)",
+      imageUrl: session.user.image ?? null,
+      isMirror: true,
+    };
+  } else if (isPendingEmail) {
+    opponentInfo = {
+      displayName: oppPlayerId.slice("pending:".length),
+      imageUrl: null,
+      isMirror: false,
+    };
+  } else {
+    const opp = await db
+      .select({ name: users.name, email: users.email, image: users.image })
+      .from(users)
+      .where(eq(users.id, oppPlayerId))
+      .limit(1);
+    const row = opp[0];
+    opponentInfo = {
+      displayName: row?.name ?? row?.email ?? oppPlayerId.slice(0, 8),
+      imageUrl: row?.image ?? null,
+      isMirror: false,
+    };
+  }
+
   return (
     <main className="min-h-screen p-4 max-w-5xl mx-auto">
       {header}
@@ -118,6 +156,7 @@ export default async function BattlePage({ params, searchParams }: PageProps) {
         initialState={state}
         meSideIndex={effectiveMeIndex}
         cardMeta={cardMeta}
+        opponentInfo={opponentInfo}
       />
     </main>
   );

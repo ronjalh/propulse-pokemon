@@ -1,4 +1,26 @@
-import type { BattleEvent as EngineEvent, BattleState } from "@/lib/battle/types";
+import type { BattleEvent as EngineEvent } from "@/lib/battle/types";
+
+// Slim payload — Pusher caps events at 10KB, so we can't send the full state.
+// Only the fields the UI needs to visually update.
+export type SlimTurnDelta = {
+  turn: number;
+  winnerId: string | null;
+  sides: [SlimSide, SlimSide];
+};
+export type SlimSide = {
+  playerId: string;
+  activeIndex: number;
+  team: SlimCard[];
+};
+export type SlimCard = {
+  cardId: string;
+  currentHp: number;
+  status: string | null;
+  confusionTurnsLeft: number;
+  sleepTurnsLeft: number;
+  /** PP remaining for each of this card's move slots, in order. */
+  ppLeft: number[];
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Transport-level events sent over Pusher — thin wrappers around the engine's
@@ -15,8 +37,8 @@ export type TurnLifecycleEvent =
       kind: "turn-resolved";
       turn: number;
       events: EngineEvent[];
-      /** Snapshot of the new state so clients don't need to re-run the engine. */
-      newState: BattleState;
+      /** Slim delta of the new state — full state exceeds Pusher's 10KB limit. */
+      delta: SlimTurnDelta;
     }
   | { kind: "player-disconnected"; playerId: string }
   | { kind: "player-reconnected"; playerId: string };
