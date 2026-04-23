@@ -2,8 +2,13 @@ import "server-only";
 import { sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { battles, type TurnLogEntry } from "@/lib/db/schema";
+import {
+  battles,
+  type BattleWager,
+  type TurnLogEntry,
+} from "@/lib/db/schema";
 import { logCardEvent } from "@/lib/economy/credits";
+import { settleWager } from "./wager";
 import type { BattleEvent, BattleState } from "./types";
 
 type PersistOnCreateArgs = {
@@ -12,6 +17,7 @@ type PersistOnCreateArgs = {
   p2Id: string | null;
   rngSeed: number;
   initialState: BattleState;
+  wager?: BattleWager | null;
 };
 
 /** Called when a battle is first created — inserts an empty history row. */
@@ -21,6 +27,7 @@ export async function persistBattleCreate({
   p2Id,
   rngSeed,
   initialState,
+  wager,
 }: PersistOnCreateArgs): Promise<void> {
   await db
     .insert(battles)
@@ -32,6 +39,7 @@ export async function persistBattleCreate({
       initialState,
       turnLog: [] as TurnLogEntry[],
       turnsPlayed: 0,
+      wager: wager ?? null,
     })
     .onConflictDoNothing();
 }
@@ -72,4 +80,7 @@ export async function persistBattleEnd(
       finalState,
     })
     .where(sql`${battles.id} = ${battleId}`);
+
+  // Settle any wager (credit payout + wager-card transfer). Idempotent.
+  await settleWager(battleId, finalState.winnerId);
 }

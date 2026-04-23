@@ -6,7 +6,9 @@ import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
-import { battles, users } from "@/lib/db/schema";
+import { battles, cards, users, type BattleWager } from "@/lib/db/schema";
+import { InsufficientCreditsError, spend } from "@/lib/economy/credits";
+import { refundWager } from "./wager";
 import { hashSeed } from "./rng";
 import { hydrateSide, hydrateSingleCard } from "./hydrate";
 import {
@@ -27,11 +29,25 @@ export async function createBattleAction(formData: FormData): Promise<never> {
 
   const teamId = String(formData.get("teamId") ?? "");
   const opponentEmailRaw = String(formData.get("opponentEmail") ?? "").trim().toLowerCase();
+  const wagerCredits = parseWagerCredits(formData.get("wagerCredits"));
+  const wagerCardId = (formData.get("wagerCardId") as string) || null;
   if (!teamId || !opponentEmailRaw) {
     redirect("/battle/new?error=missing-fields");
   }
   if (opponentEmailRaw === session.user.email?.toLowerCase()) {
     redirect("/battle/new?error=cannot-challenge-self");
+  }
+
+  // Validate the wager card belongs to the user and is in the team.
+  if (wagerCardId) {
+    const own = await db
+      .select({ ownerId: cards.ownerId })
+      .from(cards)
+      .where(eq(cards.id, wagerCardId))
+      .limit(1);
+    if (own[0]?.ownerId !== userId) {
+      redirect("/battle/new?error=wager-not-owned");
+    }
   }
 
   // Resolve opponent (must already exist — i.e. signed in before at least once).
@@ -45,11 +61,38 @@ export async function createBattleAction(formData: FormData): Promise<never> {
   if ("code" in ownSide) {
     redirect(`/battle/new?error=own-team-${ownSide.code}`);
   }
+  if (wagerCardId && !ownSide.team.some((c) => c.cardId === wagerCardId)) {
+    redirect("/battle/new?error=wager-not-in-team");
+  }
+
+  // Escrow credits up-front (fails cleanly if not enough).
+  if (wagerCredits > 0) {
+    try {
+      await spend({
+        userId,
+        amount: wagerCredits,
+        reason: `battle-wager-escrow:create`,
+      });
+    } catch (err) {
+      if (err instanceof InsufficientCreditsError) {
+        redirect("/battle/new?error=insufficient-wager");
+      }
+      throw err;
+    }
+  }
 
   const battleId = crypto.randomUUID();
+  const wager: BattleWager | null =
+    wagerCredits > 0 || wagerCardId
+      ? {
+          credits: wagerCredits,
+          p1CardId: wagerCardId,
+          p2CardId: null, // set by invitee on join
+          settled: false,
+        }
+      : null;
 
   if (opp.length === 0) {
-    // Opponent hasn't signed up yet — store by email, they'll be bound on join.
     const state: BattleState = {
       battleId,
       turn: 1,
@@ -64,7 +107,7 @@ export async function createBattleAction(formData: FormData): Promise<never> {
       ],
       winnerId: null,
     };
-    await createPendingBattle(battleId, state, { email: opponentEmailRaw });
+    await createPendingBattle(battleId, state, { email: opponentEmailRaw }, wager);
   } else {
     const state: BattleState = {
       battleId,
@@ -80,10 +123,21 @@ export async function createBattleAction(formData: FormData): Promise<never> {
       ],
       winnerId: null,
     };
-    await createPendingBattle(battleId, state, { userId: opp[0].id, email: opp[0].email });
+    await createPendingBattle(
+      battleId,
+      state,
+      { userId: opp[0].id, email: opp[0].email },
+      wager,
+    );
   }
 
   redirect(`/battle/${battleId}`);
+}
+
+function parseWagerCredits(raw: FormDataEntryValue | null): number {
+  const n = Number(raw ?? 0);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return Math.floor(n);
 }
 
 /** Challenge someone to a 1v1 with a single card (no team required). */
@@ -97,6 +151,7 @@ export async function createQuick1v1ChallengeAction(
 
   const cardId = String(formData.get("cardId") ?? "");
   const opponentEmailRaw = String(formData.get("opponentEmail") ?? "").trim().toLowerCase();
+  const wagerCredits = parseWagerCredits(formData.get("wagerCredits"));
   if (!cardId || !opponentEmailRaw) {
     redirect("/battle/new?error=missing-fields");
   }
@@ -107,6 +162,24 @@ export async function createQuick1v1ChallengeAction(
   const ownSide = await hydrateSingleCard(cardId, userId);
   if ("code" in ownSide) {
     redirect(`/battle/new?error=own-team-${ownSide.code}`);
+  }
+
+  // In 1v1, the picked card IS the wager card by definition.
+  const p1CardId = cardId;
+
+  if (wagerCredits > 0) {
+    try {
+      await spend({
+        userId,
+        amount: wagerCredits,
+        reason: `battle-wager-escrow:create-1v1`,
+      });
+    } catch (err) {
+      if (err instanceof InsufficientCreditsError) {
+        redirect("/battle/new?error=insufficient-wager");
+      }
+      throw err;
+    }
   }
 
   const opp = await db
@@ -132,12 +205,17 @@ export async function createQuick1v1ChallengeAction(
     ],
     winnerId: null,
   };
+  const wager: BattleWager | null =
+    wagerCredits > 0
+      ? { credits: wagerCredits, p1CardId, p2CardId: null, settled: false }
+      : null;
   await createPendingBattle(
     battleId,
     state,
     opp.length
       ? { userId: opp[0].id, email: opp[0].email }
       : { email: opponentEmailRaw },
+    wager,
   );
 
   redirect(`/battle/${battleId}`);
@@ -172,6 +250,48 @@ export async function joinBattleAction(formData: FormData): Promise<never> {
     ? await hydrateSingleCard(String(formData.get("cardId") ?? ""), userId)
     : await hydrateSide(teamId, userId);
   if ("code" in side) redirect(`/battle/${battleId}?error=join-team-${side.code}`);
+
+  // Match the wager if the battle has one.
+  const battleRows = await db
+    .select({ wager: battles.wager })
+    .from(battles)
+    .where(eq(battles.id, battleId))
+    .limit(1);
+  const wager = battleRows[0]?.wager as BattleWager | null;
+  if (wager) {
+    const myWagerCardId = (formData.get("wagerCardId") as string) || null;
+    if (wager.p1CardId && !myWagerCardId) {
+      redirect(`/battle/${battleId}?error=need-wager-card`);
+    }
+    if (myWagerCardId) {
+      const ownsCard = side.team.some((c) => c.cardId === myWagerCardId);
+      if (!ownsCard) {
+        redirect(`/battle/${battleId}?error=wager-not-in-team`);
+      }
+    }
+    // Escrow credits from invitee
+    if (wager.credits > 0) {
+      try {
+        await spend({
+          userId,
+          amount: wager.credits,
+          reason: `battle-wager-escrow:join`,
+        });
+      } catch (err) {
+        if (err instanceof InsufficientCreditsError) {
+          redirect(`/battle/${battleId}?error=insufficient-wager`);
+        }
+        throw err;
+      }
+    }
+    // Lock in invitee's wager card
+    await db
+      .update(battles)
+      .set({
+        wager: { ...wager, p2CardId: myWagerCardId ?? null } satisfies BattleWager,
+      })
+      .where(eq(battles.id, battleId));
+  }
 
   const result = await joinPendingBattle(battleId, userId, side);
   if (!result.ok) redirect(`/battle/${battleId}?error=${result.reason}`);

@@ -311,6 +311,17 @@ export type TurnLogEntry = {
   stateAfter: unknown;
 };
 
+export type BattleWager = {
+  /** Each side puts this many credits in — winner takes 2× */
+  credits: number;
+  /** p1's wagered card id, or null for credits-only wager */
+  p1CardId: string | null;
+  /** p2's wagered card id, or null */
+  p2CardId: string | null;
+  /** Whether stakes have been settled (winner paid out). Avoids double-paying. */
+  settled: boolean;
+};
+
 export const battles = pgTable(
   "battles",
   {
@@ -331,6 +342,8 @@ export const battles = pgTable(
     finalState: jsonb("final_state"),
     turnLog: jsonb("turn_log").$type<TurnLogEntry[]>().notNull().default([]),
     turnsPlayed: integer("turns_played").notNull().default(0),
+    /** null → no stakes, otherwise the locked-in wager */
+    wager: jsonb("wager").$type<BattleWager>(),
   },
   (t) => [
     index("battles_p1_idx").on(t.p1Id, t.createdAt),

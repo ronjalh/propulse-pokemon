@@ -8,6 +8,7 @@ import {
   persistTurn,
 } from "./persist";
 import type { BattleSide, BattleState, Intent } from "./types";
+import type { BattleWager } from "@/lib/db/schema";
 import type { SlimTurnDelta } from "@/lib/realtime/events";
 import { publishBattleEvent } from "@/lib/realtime/server";
 
@@ -156,6 +157,7 @@ export async function isBattleParticipant(
 export async function createBattle(
   battleId: string,
   state: BattleState,
+  wager?: BattleWager | null,
 ): Promise<VersionedState> {
   const initial: VersionedState = {
     ...state,
@@ -171,6 +173,7 @@ export async function createBattle(
     p2Id: realPlayerId(state.sides[1].playerId),
     rngSeed: state.rngSeed,
     initialState: state,
+    wager,
   });
   await publishBattleEvent(battleId, {
     kind: "turn-start",
@@ -199,6 +202,7 @@ export async function createPendingBattle(
   battleId: string,
   state: BattleState,
   pendingOpponent: { userId?: string; email?: string },
+  wager?: BattleWager | null,
 ): Promise<VersionedState> {
   const initial: VersionedState = {
     ...state,
@@ -214,6 +218,7 @@ export async function createPendingBattle(
     p2Id: realPlayerId(state.sides[1].playerId),
     rngSeed: state.rngSeed,
     initialState: state,
+    wager,
   });
   return initial;
 }

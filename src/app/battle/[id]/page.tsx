@@ -1,16 +1,48 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
+import { Coins } from "lucide-react";
 
 import { auth } from "@/auth";
 import { CreditsBadge } from "@/components/layout/CreditsBadge";
 import { fetchCardMeta } from "@/lib/battle/card-meta";
 import { getState } from "@/lib/battle/session";
 import { db } from "@/lib/db/client";
-import { users } from "@/lib/db/schema";
+import { battles as battlesTable, users } from "@/lib/db/schema";
 import { listTeamsForUser, ownedCardsForUser } from "@/lib/teams/queries";
 import { JoinBattle } from "./JoinBattle";
 import { BattleScreen } from "./BattleScreen";
+
+function WagerSummary({
+  wager,
+  wagerCardName,
+}: {
+  wager: { credits: number; p1CardId: string | null };
+  wagerCardName?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm flex items-center gap-2">
+      <Coins className="text-amber-500 shrink-0" />
+      <div>
+        <div className="font-medium">Wagered match</div>
+        <div className="text-xs text-muted-foreground">
+          {wager.credits > 0 && (
+            <>
+              {wager.credits} credits per side · winner takes {wager.credits * 2}
+            </>
+          )}
+          {wager.credits > 0 && wager.p1CardId && " · "}
+          {wager.p1CardId && (
+            <>
+              challenger wagered <b>{wagerCardName ?? "a card"}</b> — you must
+              wager one of yours too
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -55,7 +87,19 @@ export default async function BattlePage({ params, searchParams }: PageProps) {
   );
 
   if (state.phase === "awaiting_opponent") {
-    // The challenger is waiting; the invitee sees the "join" form.
+    // Fetch the battle row to read wager details.
+    const battleRows = await db
+      .select({ wager: battlesTable.wager })
+      .from(battlesTable)
+      .where(eq(battlesTable.id, battleId))
+      .limit(1);
+    const wager = battleRows[0]?.wager as
+      | { credits: number; p1CardId: string | null; p2CardId: string | null; settled: boolean }
+      | null;
+    const wagerCard = wager?.p1CardId
+      ? (await fetchCardMeta([wager.p1CardId]))[wager.p1CardId]
+      : null;
+
     const iAmChallenger = state.sides[0].playerId === userId;
     if (iAmChallenger) {
       const shareLink = `/battle/${battleId}`;
@@ -72,6 +116,7 @@ export default async function BattlePage({ params, searchParams }: PageProps) {
           <div className="mt-3 rounded-md border p-3 font-mono text-sm break-all">
             {shareLink}
           </div>
+          {wager && <WagerSummary wager={wager} wagerCardName={wagerCard?.personName} />}
           <p className="mt-3 text-xs text-muted-foreground">
             Refresh this page once they&rsquo;ve joined.
           </p>
@@ -95,6 +140,7 @@ export default async function BattlePage({ params, searchParams }: PageProps) {
           {state.sides[0].playerId} challenged you.{" "}
           {is1v1 ? "Pick a single card to accept." : "Pick a team to accept."}
         </p>
+        {wager && <WagerSummary wager={wager} wagerCardName={wagerCard?.personName} />}
         {error && (
           <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
             {error}
@@ -105,6 +151,7 @@ export default async function BattlePage({ params, searchParams }: PageProps) {
           mode={is1v1 ? "card" : "team"}
           teams={readyTeams}
           cards={myCards}
+          wager={wager}
         />
       </main>
     );
