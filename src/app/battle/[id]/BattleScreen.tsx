@@ -1,13 +1,14 @@
 "use client";
 
 import Image from "next/image";
+import { Skull } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { PropulseCard } from "@/components/card/PropulseCard";
 import { abandonBattleAction } from "@/lib/battle/actions";
 import type { CardMeta } from "@/lib/battle/card-meta";
-import type { BattleCard, BattleEvent, BattleState, Intent } from "@/lib/battle/types";
+import type { BattleCard, BattleEvent, BattleSide, BattleState, Intent } from "@/lib/battle/types";
 import { useBattleChannel } from "@/lib/realtime/client";
 import type { BattleEventPayload, SlimTurnDelta } from "@/lib/realtime/events";
 
@@ -196,12 +197,18 @@ export function BattleScreen({
           <CardPanel
             side="opponent"
             card={opp}
+            battleSide={oppSide}
             meta={cardMeta[opp.cardId]}
             opponentInfo={opponentInfo}
           />
         </div>
         <div className="md:order-1">
-          <CardPanel side="me" card={me} meta={cardMeta[me.cardId]} />
+          <CardPanel
+            side="me"
+            card={me}
+            battleSide={mySide}
+            meta={cardMeta[me.cardId]}
+          />
         </div>
       </div>
 
@@ -335,11 +342,13 @@ export function BattleScreen({
 function CardPanel({
   side,
   card,
+  battleSide,
   meta,
   opponentInfo,
 }: {
   side: "opponent" | "me";
   card: BattleCard;
+  battleSide: BattleSide;
   meta: CardMeta | undefined;
   opponentInfo?: OpponentInfo;
 }) {
@@ -411,7 +420,58 @@ function CardPanel({
         <div className="text-xs tabular-nums">
           {card.currentHp} / {card.maxHp} HP
         </div>
+        <TeamRoster side={side} battleSide={battleSide} />
       </div>
+    </div>
+  );
+}
+
+/** A compact roster of the side's team: filled dot for alive, skull for fainted,
+ *  the active card's dot has a ring. Hide entirely for 1v1 mode (nothing to track). */
+function TeamRoster({
+  side,
+  battleSide,
+}: {
+  side: "opponent" | "me";
+  battleSide: BattleSide;
+}) {
+  if (battleSide.team.length <= 1) return null;
+  const aliveColour = side === "opponent" ? "bg-rose-500" : "bg-sky-500";
+  const activeRing =
+    side === "opponent" ? "ring-2 ring-rose-300" : "ring-2 ring-sky-300";
+  const fainted = battleSide.team.filter((c) => c.currentHp <= 0).length;
+  return (
+    <div
+      className={`flex items-center gap-1 pt-1 ${
+        side === "opponent" ? "justify-end" : ""
+      }`}
+      aria-label={`${fainted} of ${battleSide.team.length} fainted`}
+    >
+      {battleSide.team.map((c, i) => {
+        const dead = c.currentHp <= 0;
+        const isActive = i === battleSide.activeIndex;
+        if (dead) {
+          return (
+            <Skull
+              key={c.cardId}
+              className="size-4 text-muted-foreground/80"
+              aria-label={`${c.personName} fainted`}
+            />
+          );
+        }
+        return (
+          <div
+            key={c.cardId}
+            className={`size-3 rounded-full ${aliveColour} ${
+              isActive ? activeRing : "opacity-70"
+            }`}
+            aria-label={`${c.personName} — ${c.currentHp}/${c.maxHp} HP${
+              isActive ? " (active)" : ""
+            }`}
+            title={`${c.personName} (${c.currentHp}/${c.maxHp})`}
+          />
+        );
+      })}
     </div>
   );
 }
