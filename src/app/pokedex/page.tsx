@@ -93,7 +93,7 @@ export default async function PokedexPage() {
               <div className="text-[0.65rem] font-semibold truncate">
                 {isOwned ? p.name : "???"}
               </div>
-              <div className="text-[0.55rem] text-muted-foreground uppercase">
+              <div className="text-xs text-muted-foreground uppercase">
                 {p.discipline}
               </div>
             </div>

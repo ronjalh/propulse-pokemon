@@ -73,7 +73,7 @@ export default async function BattleHistoryPage() {
                       vs {opponentLabel}
                     </span>
                     {row.wager && (row.wager as BattleWager).credits > 0 && (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/20 text-amber-700 border border-amber-500/40">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-700 border border-amber-500/40">
                         <Coins className="size-3" />
                         {(row.wager as BattleWager).credits * 2}
                       </span>

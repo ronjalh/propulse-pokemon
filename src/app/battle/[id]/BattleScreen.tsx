@@ -273,7 +273,7 @@ export function BattleScreen({
                 >
                   <div>
                     <div className="font-medium">{slot.move.name}</div>
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-xs text-muted-foreground">
                       {slot.move.type} · {slot.move.category}
                       {slot.move.power ? ` · ${slot.move.power}BP` : ""}
                       {slot.isTm ? " · TM" : ""}
@@ -307,7 +307,7 @@ export function BattleScreen({
                   className="h-auto py-2 flex flex-col items-center"
                 >
                   <div className="text-xs font-medium">{c.personName}</div>
-                  <div className="text-[10px] text-muted-foreground">
+                  <div className="text-xs text-muted-foreground">
                     {c.currentHp}/{c.maxHp} HP
                   </div>
                 </Button>

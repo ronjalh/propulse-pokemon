@@ -138,7 +138,7 @@ export default async function RewardsPage({ searchParams }: PageProps) {
                       : "border-muted-foreground/20 bg-muted/20"
                 }`}
               >
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">
                   Day {r.day}
                 </div>
                 <div className="mt-1">

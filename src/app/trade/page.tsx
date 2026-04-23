@@ -184,7 +184,7 @@ function MiniCard({ card }: { card: TradeCardDetail | null }) {
           {card.personName}
           {card.isShiny && <Sparkles className="size-3 text-pink-500" />}
         </div>
-        <div className="text-[10px] text-muted-foreground">
+        <div className="text-xs text-muted-foreground">
           {card.primaryType}
           {card.secondaryType ? `/${card.secondaryType}` : ""}
         </div>
@@ -204,7 +204,7 @@ function StatusPill({ status }: { status: string }) {
           : "bg-muted text-muted-foreground border-muted-foreground/30";
   return (
     <span
-      className={`px-2 py-0.5 rounded-full border text-[10px] uppercase tracking-wide font-semibold ${colour}`}
+      className={`px-2 py-0.5 rounded-full border text-xs uppercase tracking-wide font-semibold ${colour}`}
     >
       {status}
     </span>

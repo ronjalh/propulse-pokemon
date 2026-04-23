@@ -124,7 +124,7 @@ function PreviewThumb({ card }: { card: TeamPreviewCard }) {
         />
       </div>
       <div
-        className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-popover px-2 py-0.5 text-[10px] font-medium shadow opacity-0 group-hover/thumb:opacity-100 transition-opacity z-10"
+        className="pointer-events-none absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-popover px-2 py-0.5 text-xs font-medium shadow opacity-0 group-hover/thumb:opacity-100 transition-opacity z-10"
       >
         {card.personName} · {types}
       </div>

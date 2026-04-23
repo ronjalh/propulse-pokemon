@@ -136,7 +136,7 @@ export default async function LevelUpPage({ params, searchParams }: PageProps) {
                     {person.name}
                     {f.isShiny ? " ✨" : ""}
                   </div>
-                  <div className="text-[10px] text-muted-foreground">
+                  <div className="text-xs text-muted-foreground">
                     LV {f.level}
                   </div>
                 </div>

@@ -179,7 +179,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                   <div className="font-medium truncate flex items-center gap-1.5">
                     {u.name ?? u.email}
                     {u.isAdmin && (
-                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-500/20 text-rose-700 border border-rose-500/40">
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-rose-500/20 text-rose-700 border border-rose-500/40">
                         <ShieldCheck className="size-3" /> admin
                       </span>
                     )}
@@ -187,7 +187,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
                   <div className="text-xs text-muted-foreground truncate">
                     {u.email}
                   </div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5 flex gap-3 flex-wrap">
+                  <div className="text-xs text-muted-foreground mt-0.5 flex gap-3 flex-wrap">
                     <span>💰 {u.credits}</span>
                     <span>📇 {coll} cards</span>
                     {stats && (
@@ -272,7 +272,7 @@ function TxKind({ kind }: { kind: string }) {
   };
   return (
     <span
-      className={`px-1.5 py-0.5 rounded border text-[10px] uppercase ${map[kind] ?? "bg-muted"}`}
+      className={`px-1.5 py-0.5 rounded border text-xs uppercase ${map[kind] ?? "bg-muted"}`}
     >
       {kind.replace("_", " ")}
     </span>

@@ -179,7 +179,7 @@ function CardPicker({
                   {c.personName}
                   {c.isShiny ? " ✨" : ""}
                 </div>
-                <div className="text-[10px] text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   {c.primaryType}
                   {c.secondaryType ? `/${c.secondaryType}` : ""}
                 </div>

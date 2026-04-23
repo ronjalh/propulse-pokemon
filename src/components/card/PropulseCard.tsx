@@ -33,13 +33,15 @@ function StatRow({ label, value, max = 200 }: { label: string; value: number; ma
   const pct = Math.min(100, (value / max) * 100);
   return (
     <div className="flex items-center gap-2">
-      <span className="w-12 text-[0.65rem] uppercase tracking-wide opacity-80">
+      <span className="w-12 text-xs uppercase tracking-wide font-medium">
         {label}
       </span>
-      <div className="flex-1 h-1.5 bg-black/20 rounded-full overflow-hidden">
-        <div className="h-full bg-white/80" style={{ width: `${pct}%` }} />
+      <div className="flex-1 h-1.5 bg-black/25 rounded-full overflow-hidden">
+        <div className="h-full bg-white" style={{ width: `${pct}%` }} />
       </div>
-      <span className="w-8 text-right tabular-nums text-[0.7rem]">{value}</span>
+      <span className="w-8 text-right tabular-nums text-xs font-semibold">
+        {value}
+      </span>
     </div>
   );
 }
@@ -88,11 +90,11 @@ export function PropulseCard({ card, person, size = "md" }: Props) {
           {/* Bright "SHINY" badge top-right */}
           <div
             aria-hidden
-            className="pointer-events-none absolute top-2 right-2 z-10 px-2 py-0.5 rounded-full text-[0.55rem] font-bold tracking-wide text-white shadow"
+            className="pointer-events-none absolute top-2 right-2 z-10 px-2 py-0.5 rounded-full text-xs font-bold tracking-wide text-white shadow"
             style={{
               background:
                 "linear-gradient(90deg, #ff3d8b, #ffb020, #fff04a, #3dff9f, #40c4ff, #b45dff)",
-              textShadow: "0 1px 2px rgba(0,0,0,0.6)",
+              textShadow: "0 1px 2px rgba(0,0,0,0.7)",
             }}
           >
             ✨ SHINY
@@ -104,22 +106,22 @@ export function PropulseCard({ card, person, size = "md" }: Props) {
       <div className="flex items-start justify-between px-3 pt-2">
         <div className="min-w-0">
           <div className="font-bold leading-tight truncate">{displayName}</div>
-          <div className="text-[0.65rem] opacity-80 leading-tight truncate">
+          <div className="text-xs leading-tight truncate text-white/95">
             {person.title}
           </div>
           <span
-            className="mt-1 inline-block px-1.5 py-0.5 rounded bg-black/40 text-[0.55rem] tracking-wide font-semibold"
+            className="mt-1 inline-block px-1.5 py-0.5 rounded bg-black/50 text-xs tracking-wide font-semibold"
             aria-label={`Level ${cardLevel}`}
           >
             LV {cardLevel}
           </span>
         </div>
         <div className="flex flex-col items-end gap-0.5 shrink-0 ml-2">
-          <span className="px-1.5 py-0.5 rounded bg-black/30 text-[0.65rem] font-semibold">
+          <span className="px-1.5 py-0.5 rounded bg-black/40 text-xs font-semibold">
             {person.primaryType}
           </span>
           {person.secondaryType && (
-            <span className="px-1.5 py-0.5 rounded bg-black/30 text-[0.65rem] font-semibold">
+            <span className="px-1.5 py-0.5 rounded bg-black/40 text-xs font-semibold">
               {person.secondaryType}
             </span>
           )}
@@ -148,12 +150,12 @@ export function PropulseCard({ card, person, size = "md" }: Props) {
       </div>
 
       {/* footer */}
-      <div className="mt-auto px-3 pb-2 pt-1 flex items-center justify-between text-[0.65rem] opacity-90">
-        <span className="uppercase tracking-wide">
+      <div className="mt-auto px-3 pb-2 pt-1 flex items-center justify-between text-xs">
+        <span className="uppercase tracking-wide font-medium">
           {person.discipline}
           {person.subDiscipline ? ` · ${person.subDiscipline}` : ""}
         </span>
-        <span className="uppercase font-semibold">{person.rarity}</span>
+        <span className="uppercase font-bold">{person.rarity}</span>
       </div>
     </div>
   );
