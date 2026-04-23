@@ -22,7 +22,7 @@ import { TreasureChest } from "@/components/icons/TreasureChest";
 import { db } from "@/lib/db/client";
 import { cards, persons, users } from "@/lib/db/schema";
 import { getBalance } from "@/lib/economy/credits";
-import { count, eq } from "drizzle-orm";
+import { count, eq, sql } from "drizzle-orm";
 
 export default async function HomePage() {
   const session = await auth();
@@ -31,7 +31,14 @@ export default async function HomePage() {
 
   const userId = session.user.id;
 
-  const [collection, pokedex, balance, meRow] = await Promise.all([
+  const [uniquePersons, totalCards, pokedex, balance, meRow] = await Promise.all([
+    // Pokédex progress = number of distinct Persons you own any card of.
+    db
+      .select({ n: sql<number>`count(distinct ${cards.personId})::int` })
+      .from(cards)
+      .where(eq(cards.ownerId, userId))
+      .then((r) => r[0]?.n ?? 0),
+    // Raw card count for the hint line (duplicates included).
     db
       .select({ n: count() })
       .from(cards)
@@ -99,8 +106,8 @@ export default async function HomePage() {
         <StatCard label="Propulse Credits" value={balance} />
         <StatCard
           label="Pokédex"
-          value={`${collection} / ${pokedex}`}
-          hint="cards owned / total persons"
+          value={`${uniquePersons} / ${pokedex}`}
+          hint={`${totalCards} card${totalCards === 1 ? "" : "s"} total`}
         />
       </div>
 

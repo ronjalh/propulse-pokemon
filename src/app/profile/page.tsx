@@ -25,9 +25,13 @@ export default async function ProfilePage() {
     .limit(1);
   const propulsePerson = meRoster[0] ?? null;
 
-  // Collection + shiny counts.
+  // Collection: total cards (with duplicates) and distinct persons owned.
   const [collectionRow] = await db
     .select({ n: count() })
+    .from(cards)
+    .where(eq(cards.ownerId, userId));
+  const [uniquePersonsRow] = await db
+    .select({ n: sql<number>`count(distinct ${cards.personId})::int` })
     .from(cards)
     .where(eq(cards.ownerId, userId));
   const [shinyRow] = await db
@@ -141,8 +145,8 @@ export default async function ProfilePage() {
                 </div>
               }
               label="Pokédex"
-              value={`${collectionRow?.n ?? 0} / ${pokedexRow?.n ?? 0}`}
-              hint="cards owned / total persons"
+              value={`${uniquePersonsRow?.n ?? 0} / ${pokedexRow?.n ?? 0}`}
+              hint={`${collectionRow?.n ?? 0} cards incl. duplicates`}
             />
           </div>
 
