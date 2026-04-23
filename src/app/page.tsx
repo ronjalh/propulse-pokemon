@@ -9,7 +9,6 @@ import {
   Layers,
   Package,
   Swords,
-  User,
   Users,
 } from "lucide-react";
 import { auth } from "@/auth";
@@ -43,14 +42,18 @@ export default async function HomePage() {
   return (
     <main className="min-h-screen flex flex-col items-center p-6 gap-8">
       <header className="w-full max-w-2xl flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <Link
+          href="/profile"
+          className="flex items-center gap-3 rounded-lg px-2 py-1 -mx-2 hover:bg-accent transition-colors"
+          aria-label="Open my profile"
+        >
           {session.user.image && (
             <Image
               src={session.user.image}
               alt={session.user.name ?? ""}
               width={40}
               height={40}
-              className="rounded-full"
+              className="rounded-full ring-2 ring-sky-500/40"
             />
           )}
           <div>
@@ -61,7 +64,7 @@ export default async function HomePage() {
               {session.user.email}
             </div>
           </div>
-        </div>
+        </Link>
         <div className="flex items-center gap-2">
           <CreditsBadge userId={userId} />
           <form action={signOutAction}>
@@ -97,7 +100,6 @@ export default async function HomePage() {
           label="Daily Rewards"
           customIcon={<TreasureChest state="closed" size={28} />}
         />
-        <NavLink href="/profile" label="My Profile" icon={User} />
         <NavLink href="/packs" label="Open a pack" icon={Package} />
         <NavLink href="/collection" label="My Collection" icon={Layers} />
         <NavLink href="/pokedex" label="Pokédex" icon={BookOpen} />
@@ -108,7 +110,7 @@ export default async function HomePage() {
           label="Battle History"
           icon={History}
         />
-        <NavLink href="/trade" label="Trade" icon={Handshake} disabled />
+        <NavLink href="/trade" label="Trade" icon={Handshake} />
       </nav>
     </main>
   );

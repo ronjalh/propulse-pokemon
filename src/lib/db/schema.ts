@@ -340,3 +340,47 @@ export const battles = pgTable(
 
 export type Battle = typeof battles.$inferSelect;
 export type NewBattle = typeof battles.$inferInsert;
+
+// ─────────────────────────────────────────────────────────────
+// Trades — 1:1 card swap between users with mutual accept
+// ─────────────────────────────────────────────────────────────
+
+export const tradeStatusEnum = pgEnum("trade_status", [
+  "pending",
+  "accepted",
+  "rejected",
+  "cancelled",
+]);
+
+export const trades = pgTable(
+  "trades",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    respondedAt: timestamp("responded_at", { withTimezone: true }),
+    fromUserId: text("from_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    toUserId: text("to_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    offeredCardId: uuid("offered_card_id")
+      .notNull()
+      .references(() => cards.id, { onDelete: "cascade" }),
+    requestedCardId: uuid("requested_card_id")
+      .notNull()
+      .references(() => cards.id, { onDelete: "cascade" }),
+    status: tradeStatusEnum("status").notNull().default("pending"),
+    message: text("message"),
+  },
+  (t) => [
+    index("trades_from_status_idx").on(t.fromUserId, t.status),
+    index("trades_to_status_idx").on(t.toUserId, t.status),
+  ],
+);
+
+export type Trade = typeof trades.$inferSelect;
+export type NewTrade = typeof trades.$inferInsert;
+export type TradeStatus = (typeof tradeStatusEnum.enumValues)[number];
