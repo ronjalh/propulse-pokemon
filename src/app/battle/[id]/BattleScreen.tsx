@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { AnimatePresence, motion } from "framer-motion";
 import { Info, Skull } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -76,6 +77,27 @@ export function BattleScreen({
    *  polling don't both log the same turn. */
   const loggedTurnsRef = useRef<Set<number>>(new Set());
 
+  /** Per-card hit animation trigger. `key` increments to retrigger Framer
+   *  Motion. `amount` drives the floating damage number. */
+  const [hits, setHits] = useState<
+    Record<string, { amount: number; key: number }>
+  >({});
+  const hitSeq = useRef(0);
+  function triggerHit(cardId: string, amount: number) {
+    hitSeq.current += 1;
+    const key = hitSeq.current;
+    setHits((h) => ({ ...h, [cardId]: { amount, key } }));
+    // Clear after 1.5s so AnimatePresence removes the motion-div cleanly.
+    setTimeout(() => {
+      setHits((h) => {
+        if (h[cardId]?.key !== key) return h;
+        const next = { ...h };
+        delete next[cardId];
+        return next;
+      });
+    }, 1500);
+  }
+
   function pushLog(text: string) {
     logSeq.current += 1;
     setLog((prev) => [...prev, { id: logSeq.current, text }].slice(-50));
@@ -88,7 +110,18 @@ export function BattleScreen({
   ) {
     if (loggedTurnsRef.current.has(turn)) return;
     loggedTurnsRef.current.add(turn);
-    for (const e of events) pushLog(renderEvent(e, stateForNames, meSideIndex));
+    for (const e of events) {
+      pushLog(renderEvent(e, stateForNames, meSideIndex));
+      // Trigger hit animation for damage events so the target card shakes
+      // and a floating damage number appears.
+      if (e.kind === "move-used" && e.damage > 0) {
+        triggerHit(e.targetId, e.damage);
+      } else if (e.kind === "status-tick" && e.damage > 0) {
+        triggerHit(e.actorId, e.damage);
+      } else if (e.kind === "hurt-in-confusion" && e.damage > 0) {
+        triggerHit(e.actorId, e.damage);
+      }
+    }
   }
 
   // Polling fallback — fetch state every 2s so the UI stays in sync even if
@@ -237,6 +270,7 @@ export function BattleScreen({
             battleSide={oppSide}
             meta={cardMeta[opp.cardId]}
             opponentInfo={opponentInfo}
+            hit={hits[opp.cardId]}
           />
         </div>
         <div className="md:order-1">
@@ -245,6 +279,7 @@ export function BattleScreen({
             card={me}
             battleSide={mySide}
             meta={cardMeta[me.cardId]}
+            hit={hits[me.cardId]}
           />
         </div>
       </div>
@@ -395,12 +430,14 @@ function CardPanel({
   battleSide,
   meta,
   opponentInfo,
+  hit,
 }: {
   side: "opponent" | "me";
   card: BattleCard;
   battleSide: BattleSide;
   meta: CardMeta | undefined;
   opponentInfo?: OpponentInfo;
+  hit?: { amount: number; key: number };
 }) {
   const pct = Math.max(0, (card.currentHp / card.maxHp) * 100);
   const barColour =
@@ -414,11 +451,34 @@ function CardPanel({
   const headerLabel = side === "opponent" ? "Opponent" : "You";
 
   return (
-    <div
-      className={`rounded-lg border-2 p-3 flex gap-3 ${themeClass} ${
+    <motion.div
+      // Card-shake on hit. Key change retriggers the animation.
+      animate={
+        hit
+          ? { x: [0, -6, 5, -4, 3, -2, 0] }
+          : { x: 0 }
+      }
+      transition={{ duration: 0.45, ease: "easeInOut" }}
+      key={`panel-${hit?.key ?? 0}`}
+      className={`relative rounded-lg border-2 p-3 flex gap-3 ${themeClass} ${
         card.currentHp === 0 ? "opacity-60 grayscale" : ""
       } ${side === "opponent" ? "flex-row-reverse text-right" : ""}`}
     >
+      {/* Floating damage number on hit. */}
+      <AnimatePresence>
+        {hit && (
+          <motion.div
+            key={hit.key}
+            initial={{ opacity: 0, y: 10, scale: 0.8 }}
+            animate={{ opacity: 1, y: -40, scale: 1.15 }}
+            exit={{ opacity: 0, y: -60 }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 z-20 text-3xl font-black text-rose-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
+          >
+            -{hit.amount}
+          </motion.div>
+        )}
+      </AnimatePresence>
       {meta && (
         <div className="shrink-0">
           <PropulseCard
@@ -463,7 +523,7 @@ function CardPanel({
         </div>
         <div className="h-2 rounded bg-muted overflow-hidden">
           <div
-            className={`h-full ${barColour} transition-all`}
+            className={`h-full ${barColour} transition-[width] duration-700 ease-out`}
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -472,7 +532,7 @@ function CardPanel({
         </div>
         <TeamRoster side={side} battleSide={battleSide} />
       </div>
-    </div>
+    </motion.div>
   );
 }
 
