@@ -118,6 +118,49 @@ export async function listTeamsForUser(userId: string): Promise<Team[]> {
     .orderBy(teams.updatedAt);
 }
 
+export type TeamPreviewCard = {
+  cardId: string;
+  personName: string;
+  imageUrl: string;
+  primaryType: string;
+  secondaryType: string | null;
+};
+
+/** Batch-fetch preview data for the first N cards of each team. */
+export async function previewCardsForTeams(
+  teamsList: Team[],
+  perTeam = 6,
+): Promise<Record<string, TeamPreviewCard[]>> {
+  const allIds = teamsList.flatMap((t) =>
+    t.cardIds.filter(Boolean).slice(0, perTeam),
+  );
+  if (allIds.length === 0) return {};
+  const rows = await db
+    .select({
+      cardId: cards.id,
+      personName: persons.name,
+      imageUrl: persons.imageUrl,
+      primaryType: persons.primaryType,
+      secondaryType: persons.secondaryType,
+    })
+    .from(cards)
+    .innerJoin(persons, eq(cards.personId, persons.id))
+    .where(inArray(cards.id, allIds));
+  const byId = new Map<string, TeamPreviewCard>(
+    rows.map((r) => [r.cardId, r as TeamPreviewCard]),
+  );
+  const out: Record<string, TeamPreviewCard[]> = {};
+  for (const t of teamsList) {
+    const preview: TeamPreviewCard[] = [];
+    for (const id of t.cardIds.filter(Boolean).slice(0, perTeam)) {
+      const row = byId.get(id);
+      if (row) preview.push(row);
+    }
+    out[t.id] = preview;
+  }
+  return out;
+}
+
 export async function getTeam(
   teamId: string,
   userId: string,
