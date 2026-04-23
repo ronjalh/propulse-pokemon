@@ -7,7 +7,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { hashSeed } from "./rng";
-import { hydrateSide } from "./hydrate";
+import { hydrateSide, hydrateSingleCard } from "./hydrate";
 import {
   abandonBattle,
   createPendingBattle,
@@ -124,6 +124,45 @@ export async function abandonBattleAction(formData: FormData): Promise<never> {
   if (!battleId) redirect("/");
   await abandonBattle(battleId, session.user.id);
   redirect("/battle/history");
+}
+
+/**
+ * Quick 1v1 solo test: user picks a single card and fights a mirror of it.
+ * Moves are auto-picked randomly from the card's learnset — no team needed.
+ */
+export async function createQuickSoloBattleAction(
+  formData: FormData,
+): Promise<never> {
+  const session = await auth();
+  if (!session?.user) redirect("/signin");
+  if (!isRedisConfigured()) redirect("/battle/new?error=redis-missing");
+  const userId = session.user.id;
+  const cardId = String(formData.get("cardId") ?? "");
+  if (!cardId) redirect("/battle/new?error=missing-fields");
+
+  const ownSide = await hydrateSingleCard(cardId, userId);
+  if ("code" in ownSide) redirect(`/battle/new?error=own-team-${ownSide.code}`);
+
+  const mirrorSide = {
+    ...ownSide,
+    playerId: `mirror:${userId}`,
+    team: ownSide.team.map((c) => ({
+      ...c,
+      currentHp: c.maxHp,
+      moves: c.moves.map((m) => ({ ...m, ppLeft: m.move.pp })),
+    })),
+  };
+
+  const battleId = crypto.randomUUID();
+  const state: BattleState = {
+    battleId,
+    turn: 1,
+    rngSeed: hashSeed(battleId),
+    sides: [ownSide, mirrorSide],
+    winnerId: null,
+  };
+  await createBattle(battleId, state);
+  redirect(`/battle/${battleId}`);
 }
 
 /** Start a solo test battle vs a mirror copy of your own team (dev aid). */

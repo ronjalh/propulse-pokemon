@@ -14,7 +14,9 @@ import { computeFinalStats, generateIVs } from "@/lib/cards/stats";
 import { resolveTypes } from "@/lib/data/type-mapping";
 import type { BattleCard, BattleSide, MoveSlot } from "./types";
 
-export type HydrateError = { code: "team-not-found" | "not-owned" | "invalid" };
+export type HydrateError = {
+  code: "team-not-found" | "not-owned" | "invalid" | "no-moves";
+};
 
 /**
  * Turn a saved Team row into a BattleSide ready for the engine.
@@ -124,4 +126,86 @@ export async function hydrateSide(
     team: battleCards,
     activeIndex: 0,
   };
+}
+
+/**
+ * Hydrate a single card into a one-member BattleSide — used by 1v1 quick
+ * battles. Picks 4 random moves from the card's eligible learnset so the
+ * user doesn't have to build a team first.
+ */
+export async function hydrateSingleCard(
+  cardId: string,
+  userId: string,
+): Promise<BattleSide | HydrateError> {
+  const cardRows = await db
+    .select({
+      cardId: cards.id,
+      ownerId: cards.ownerId,
+      isShiny: cards.isShiny,
+      ivs: cards.ivs,
+      personId: persons.id,
+      personName: persons.name,
+      discipline: persons.discipline,
+      subDiscipline: persons.subDiscipline,
+      primaryType: persons.primaryType,
+      secondaryType: persons.secondaryType,
+      baseStats: persons.baseStats,
+    })
+    .from(cards)
+    .innerJoin(persons, eq(cards.personId, persons.id))
+    .where(eq(cards.id, cardId))
+    .limit(1);
+  if (cardRows.length === 0) return { code: "invalid" };
+  const card = cardRows[0];
+  if (card.ownerId !== userId) return { code: "not-owned" };
+
+  const learnset = await db
+    .select({
+      moveId: personLearnset.moveId,
+      isTm: personLearnset.isTm,
+    })
+    .from(personLearnset)
+    .where(eq(personLearnset.personId, card.personId));
+  if (learnset.length === 0) return { code: "no-moves" };
+
+  const moveIdsForCard = learnset.map((l) => l.moveId);
+  const moveRows = await db
+    .select()
+    .from(moves)
+    .where(inArray(moves.id, moveIdsForCard));
+  const movesById = new Map(moveRows.map((m) => [m.id, m]));
+
+  // Pick 4 random moves from the learnset.
+  const shuffled = learnset.slice().sort(() => Math.random() - 0.5);
+  const picked = shuffled.slice(0, 4);
+
+  const ivs = card.ivs ?? generateIVs(cardId);
+  const stats = computeFinalStats(card.baseStats, ivs, card.isShiny);
+  const types = resolveTypes(
+    card.discipline as Parameters<typeof resolveTypes>[0],
+    card.subDiscipline ?? undefined,
+  );
+
+  const moveSlots: MoveSlot[] = [];
+  for (const p of picked) {
+    const m = movesById.get(p.moveId);
+    if (!m) continue;
+    moveSlots.push({ move: m, ppLeft: m.pp, isTm: p.isTm });
+  }
+  if (moveSlots.length === 0) return { code: "no-moves" };
+
+  const battleCard: BattleCard = {
+    cardId,
+    personName: card.personName,
+    types,
+    level: 50,
+    maxHp: stats.hp,
+    currentHp: stats.hp,
+    stats,
+    moves: moveSlots,
+    status: null,
+    volatile: { confusionTurnsLeft: 0, sleepTurnsLeft: 0 },
+  };
+
+  return { playerId: userId, team: [battleCard], activeIndex: 0 };
 }

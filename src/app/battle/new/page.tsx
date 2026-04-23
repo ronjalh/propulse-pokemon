@@ -4,9 +4,10 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { CreditsBadge } from "@/components/layout/CreditsBadge";
-import { listTeamsForUser } from "@/lib/teams/queries";
+import { listTeamsForUser, ownedCardsForUser } from "@/lib/teams/queries";
 import {
   createBattleAction,
+  createQuickSoloBattleAction,
   createSoloTestBattleAction,
 } from "@/lib/battle/actions";
 
@@ -16,7 +17,10 @@ export default async function NewBattlePage({ searchParams }: PageProps) {
   const session = await auth();
   if (!session?.user) redirect("/signin");
   const { error } = await searchParams;
-  const teams = await listTeamsForUser(session.user.id);
+  const [teams, ownedCards] = await Promise.all([
+    listTeamsForUser(session.user.id),
+    ownedCardsForUser(session.user.id),
+  ]);
   const readyTeams = teams.filter((t) => t.cardIds.filter(Boolean).length === 6);
 
   return (
@@ -36,9 +40,40 @@ export default async function NewBattlePage({ searchParams }: PageProps) {
         </div>
       )}
 
+      {/* Quick 1v1 — works with any single card, no team needed */}
+      {ownedCards.length > 0 && (
+        <form
+          action={createQuickSoloBattleAction}
+          className="rounded-lg border p-4 space-y-3"
+        >
+          <div className="font-semibold">Quick 1v1 (solo vs mirror)</div>
+          <p className="text-xs text-muted-foreground">
+            Pick one card. 4 moves will be randomly chosen from its learnset.
+            Fastest way to test the combat loop — no team required.
+          </p>
+          <label className="block text-sm">
+            Card
+            <select
+              name="cardId"
+              required
+              className="mt-1 w-full rounded border bg-background p-2 text-sm"
+            >
+              {ownedCards.map((c) => (
+                <option key={c.cardId} value={c.cardId}>
+                  {c.personName}
+                  {c.isShiny ? " ✨" : ""} ({c.primaryType}
+                  {c.secondaryType ? `/${c.secondaryType}` : ""})
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button type="submit">Start 1v1</Button>
+        </form>
+      )}
+
       {readyTeams.length === 0 ? (
         <div className="rounded-lg border p-4 text-sm">
-          You need a complete 6-card team first.{" "}
+          You need a complete 6-card team for a 6v6 battle.{" "}
           <Link href="/teams" className="underline">
             Build one →
           </Link>

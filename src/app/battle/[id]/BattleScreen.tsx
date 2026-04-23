@@ -180,6 +180,12 @@ export function BattleScreen({
   const opp = oppSide.team[oppSide.activeIndex];
 
   const ended = state.winnerId !== null;
+  const mustSwitch = !ended && me.currentHp <= 0;
+
+  // Auto-flip to switch menu when your active card is knocked out.
+  useEffect(() => {
+    if (mustSwitch && menu !== "switch") setMenu("switch");
+  }, [mustSwitch, menu]);
 
   return (
     <div className="space-y-4">
@@ -206,15 +212,28 @@ export function BattleScreen({
           <div className="flex items-center justify-between">
             <div className="text-sm font-semibold">
               Turn {state.turn} ·{" "}
-              {intentSent ? "waiting for opponent…" : "choose an action"}
+              {intentSent
+                ? "waiting for opponent…"
+                : mustSwitch
+                  ? "pick a replacement"
+                  : "choose an action"}
             </div>
             <TurnTimer deadlineMs={deadlineMs} disabled={intentSent} />
           </div>
 
+          {mustSwitch && (
+            <div className="rounded border border-amber-500/40 bg-amber-500/10 p-2 text-xs">
+              <b>{me.personName}</b> fainted — send in a replacement.
+            </div>
+          )}
+
           <div className="flex gap-2 text-xs">
             <button
-              className={`px-2 py-1 rounded border ${menu === "moves" ? "bg-muted" : ""}`}
-              onClick={() => setMenu("moves")}
+              className={`px-2 py-1 rounded border ${menu === "moves" ? "bg-muted" : ""} ${
+                mustSwitch ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              onClick={() => !mustSwitch && setMenu("moves")}
+              disabled={mustSwitch}
             >
               Moves
             </button>
