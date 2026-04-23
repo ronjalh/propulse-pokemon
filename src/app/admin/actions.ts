@@ -1,6 +1,6 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq, not } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -9,17 +9,21 @@ import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { earn } from "@/lib/economy/credits";
 
-export async function grantCreditsAction(formData: FormData): Promise<never> {
+async function requireAdmin(): Promise<string> {
   const session = await auth();
   if (!session?.user) redirect("/signin");
-
-  // Authoritative admin check from the DB row (session flag could be stale).
   const [me] = await db
     .select({ isAdmin: users.isAdmin })
     .from(users)
     .where(eq(users.id, session.user.id))
     .limit(1);
   if (!me?.isAdmin) redirect("/");
+  return session.user.id;
+}
+
+export async function grantCreditsAction(formData: FormData): Promise<never> {
+  const adminUserId = await requireAdmin();
+  const session = await auth();
 
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const amountRaw = Number(formData.get("amount") ?? 0);
@@ -39,9 +43,32 @@ export async function grantCreditsAction(formData: FormData): Promise<never> {
   await earn({
     userId: target.id,
     amount: amountRaw,
-    reason: `admin-grant:${session.user.email}:${reason}`,
+    reason: `admin-grant:${session?.user?.email ?? adminUserId}:${reason}`,
   });
 
   revalidatePath("/admin");
   redirect(`/admin?granted=${amountRaw}`);
+}
+
+/** Flip the isAdmin flag on another user. Safety: can't demote yourself. */
+export async function toggleAdminAction(formData: FormData): Promise<never> {
+  const adminUserId = await requireAdmin();
+  const targetId = String(formData.get("userId") ?? "");
+  if (!targetId) redirect("/admin");
+  if (targetId === adminUserId) redirect("/admin?error=cannot-self-demote");
+
+  const [target] = await db
+    .select({ isAdmin: users.isAdmin })
+    .from(users)
+    .where(eq(users.id, targetId))
+    .limit(1);
+  if (!target) redirect("/admin?error=no-such-user");
+
+  await db
+    .update(users)
+    .set({ isAdmin: !target.isAdmin })
+    .where(and(eq(users.id, targetId), not(eq(users.id, adminUserId))));
+
+  revalidatePath("/admin");
+  redirect("/admin");
 }
