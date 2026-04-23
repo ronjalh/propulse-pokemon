@@ -215,13 +215,18 @@ function WagerFields({
   creditsOnly?: boolean;
 }) {
   return (
-    <details className="rounded border bg-muted/30 p-2">
+    <details className="rounded border bg-muted/30 p-3">
       <summary className="text-sm font-medium cursor-pointer select-none">
-        💰 Play with stakes (optional)
+        💰 Add stakes (optional)
       </summary>
-      <div className="pt-3 space-y-2">
-        <label className="block text-sm">
-          Credit wager (each side puts in this much, winner takes 2×)
+      <p className="pt-2 text-xs text-muted-foreground">
+        Pick either or both. Loser forfeits what they put up, winner takes everything.
+      </p>
+
+      <div className="mt-3 rounded border p-3 bg-background/40 space-y-2">
+        <div className="text-xs font-semibold text-sky-600">💵 Credit wager</div>
+        <label className="block text-xs">
+          How much each side puts in (0 = no credit stakes)
           <input
             name="wagerCredits"
             type="number"
@@ -231,15 +236,19 @@ function WagerFields({
             className="mt-1 w-full rounded border bg-background p-2 text-sm"
           />
         </label>
-        {!creditsOnly && (
-          <label className="block text-sm">
-            Wager card (optional) — winner takes both cards
+      </div>
+
+      {!creditsOnly ? (
+        <div className="mt-2 rounded border p-3 bg-background/40 space-y-2">
+          <div className="text-xs font-semibold text-pink-600">🃏 Card wager</div>
+          <label className="block text-xs">
+            Pick one of your cards (— none — = no card stakes)
             <select
               name="wagerCardId"
               defaultValue=""
               className="mt-1 w-full rounded border bg-background p-2 text-sm"
             >
-              <option value="">— no card wager —</option>
+              <option value="">— none —</option>
               {ownedCards.map((c) => (
                 <option key={c.cardId} value={c.cardId}>
                   {c.personName}
@@ -249,14 +258,14 @@ function WagerFields({
               ))}
             </select>
           </label>
-        )}
-        {creditsOnly && (
-          <p className="text-xs text-muted-foreground">
-            In 1v1, the card you&rsquo;re playing with is automatically the
-            wager card — loser forfeits it.
-          </p>
-        )}
-      </div>
+        </div>
+      ) : (
+        <p className="mt-2 text-xs text-muted-foreground">
+          In 1v1, the card you&rsquo;re playing with is automatically the
+          card wager — loser forfeits it. If you just want a friendly match,
+          leave the credit wager at 0.
+        </p>
+      )}
     </details>
   );
 }
