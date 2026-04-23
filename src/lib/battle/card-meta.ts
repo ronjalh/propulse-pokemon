@@ -8,6 +8,7 @@ import {
   type BaseStats,
   type IVs,
 } from "@/lib/db/schema";
+import { resolveRealCardId } from "./card-id";
 
 export type CardMeta = {
   cardId: string;
@@ -24,11 +25,24 @@ export type CardMeta = {
   baseStats: BaseStats;
 };
 
-/** Batch-fetch presentation data (name, image, stats) for a list of card ids. */
+/** Batch-fetch presentation data (name, image, stats) for a list of card ids.
+ *  Accepts mirror-prefixed ids (`mirror-<uuid>`) and looks them up under the
+ *  original uuid, aliasing the result back to the battle cardId. */
 export async function fetchCardMeta(
   cardIds: string[],
 ): Promise<Record<string, CardMeta>> {
   if (cardIds.length === 0) return {};
+
+  // Map battle-cardId → real-cardId for the DB lookup. Only real UUIDs hit
+  // the cards table; mirror cards are aliased to their source.
+  const battleToReal = new Map<string, string>();
+  const realIds = new Set<string>();
+  for (const id of cardIds) {
+    const real = resolveRealCardId(id);
+    battleToReal.set(id, real);
+    realIds.add(real);
+  }
+
   const rows = await db
     .select({
       cardId: cards.id,
@@ -46,9 +60,17 @@ export async function fetchCardMeta(
     })
     .from(cards)
     .innerJoin(persons, eq(cards.personId, persons.id))
-    .where(inArray(cards.id, cardIds));
+    .where(inArray(cards.id, [...realIds]));
+
+  const byReal = new Map(rows.map((r) => [r.cardId, r]));
 
   const out: Record<string, CardMeta> = {};
-  for (const r of rows) out[r.cardId] = r;
+  for (const battleId of cardIds) {
+    const real = battleToReal.get(battleId)!;
+    const meta = byReal.get(real);
+    if (!meta) continue;
+    // Re-key to the battle cardId so downstream `cardMeta[card.cardId]` works.
+    out[battleId] = { ...meta, cardId: battleId };
+  }
   return out;
 }

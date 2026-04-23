@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+# Blocks the commit when vitest or the Next.js production build fails.
+# Skip once (only if you really know what you're doing):
+#   git commit --no-verify
+
+set -e
+
+echo "→ vitest unit tests"
+npm test --silent
+
+echo "→ Next.js production build (typecheck + bundle)"
+npm run build --silent
+
+echo "✓ pre-commit checks passed"
