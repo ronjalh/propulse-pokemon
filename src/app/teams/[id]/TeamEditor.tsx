@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { PropulseCard } from "@/components/card/PropulseCard";
 import type { TeamMoveSets } from "@/lib/db/schema";
 import { saveTeamAction } from "@/lib/teams/actions";
 import {
@@ -219,61 +220,107 @@ function CardSlot(props: {
     (c) => c.cardId === props.cardId || !props.selectedSet.has(c.cardId),
   );
   return (
-    <div className="rounded-lg border p-3 space-y-2">
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground font-mono w-6">
-          #{props.slotIndex + 1}
-        </span>
-        <select
-          value={props.cardId}
-          onChange={(e) => props.onCardChange(e.target.value)}
-          className="flex-1 rounded border bg-background p-1.5 text-sm"
-        >
-          <option value="">— select card —</option>
-          {available.map((c) => (
-            <option key={c.cardId} value={c.cardId}>
-              {c.personName}
-              {c.isShiny ? " ✨" : ""} ({c.primaryType}
-              {c.secondaryType ? `/${c.secondaryType}` : ""})
-            </option>
-          ))}
-        </select>
-      </div>
-      {props.card ? (
-        <div className="space-y-1.5 pl-8">
-          {Array.from({ length: MOVES_PER_CARD }).map((_, moveSlot) => {
-            const selected = props.moves[moveSlot] ?? "";
-            const otherSelected = new Set(
-              props.moves.filter((_, i) => i !== moveSlot),
-            );
-            return (
-              <select
-                key={moveSlot}
-                value={selected}
-                onChange={(e) => props.onMoveChange(moveSlot, e.target.value)}
-                className="w-full rounded border bg-background p-1.5 text-xs"
-              >
-                <option value="">— move {moveSlot + 1} —</option>
-                {props.eligibleMoves.map((m) => (
-                  <option
-                    key={m.id}
-                    value={m.id}
-                    disabled={otherSelected.has(m.id)}
+    <div className="rounded-lg border p-3">
+      <div className="flex gap-3">
+        {/* LEFT: selectors */}
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-mono w-6">
+              #{props.slotIndex + 1}
+            </span>
+            <select
+              value={props.cardId}
+              onChange={(e) => props.onCardChange(e.target.value)}
+              className="flex-1 rounded border bg-background p-1.5 text-sm"
+            >
+              <option value="">— select card —</option>
+              {available.map((c) => (
+                <option key={c.cardId} value={c.cardId}>
+                  {c.personName}
+                  {c.isShiny ? " ✨" : ""} ({c.primaryType}
+                  {c.secondaryType ? `/${c.secondaryType}` : ""})
+                </option>
+              ))}
+            </select>
+          </div>
+          {props.card ? (
+            <div className="space-y-1.5 pl-8">
+              {Array.from({ length: MOVES_PER_CARD }).map((_, moveSlot) => {
+                const selected = props.moves[moveSlot] ?? "";
+                const otherSelected = new Set(
+                  props.moves.filter((_, i) => i !== moveSlot),
+                );
+                return (
+                  <select
+                    key={moveSlot}
+                    value={selected}
+                    onChange={(e) => props.onMoveChange(moveSlot, e.target.value)}
+                    className="w-full rounded border bg-background p-1.5 text-xs"
                   >
-                    {m.name} ({m.type}, {m.category}
-                    {m.power ? `, ${m.power}BP` : ""}
-                    {m.isTm ? ", TM" : ""})
-                  </option>
-                ))}
-              </select>
-            );
-          })}
+                    <option value="">— move {moveSlot + 1} —</option>
+                    {props.eligibleMoves.map((m) => (
+                      <option
+                        key={m.id}
+                        value={m.id}
+                        disabled={otherSelected.has(m.id)}
+                      >
+                        {m.name} ({m.type}, {m.category}
+                        {m.power ? `, ${m.power}BP` : ""}
+                        {m.isTm ? ", TM" : ""})
+                      </option>
+                    ))}
+                  </select>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-xs text-muted-foreground pl-8">
+              Pick a card to choose moves.
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="text-xs text-muted-foreground pl-8">
-          Pick a card to choose moves.
+
+        {/* RIGHT: card preview or empty placeholder */}
+        <div className="shrink-0">
+          {props.card ? (
+            <PropulseCard
+              size="sm"
+              card={{
+                id: props.card.cardId,
+                isShiny: props.card.isShiny,
+                ivs: props.card.ivs,
+              }}
+              person={{
+                name: props.card.personName,
+                title: props.card.title,
+                imageUrl: props.card.imageUrl,
+                discipline: props.card.discipline as never,
+                subDiscipline: props.card.subDiscipline,
+                primaryType: props.card.primaryType as never,
+                secondaryType: props.card.secondaryType as never,
+                baseStats: props.card.baseStats,
+                rarity: props.card.rarity,
+              }}
+            />
+          ) : (
+            <EmptySlotPlaceholder index={props.slotIndex} />
+          )}
         </div>
-      )}
+      </div>
+    </div>
+  );
+}
+
+function EmptySlotPlaceholder({ index }: { index: number }) {
+  return (
+    <div
+      className="w-40 h-60 rounded-2xl border-2 border-dashed border-muted-foreground/30 bg-muted/20 flex flex-col items-center justify-center text-center px-3"
+      aria-label={`Empty slot ${index + 1}`}
+    >
+      <div className="text-4xl opacity-30 font-mono">#{index + 1}</div>
+      <div className="mt-2 text-[0.7rem] text-muted-foreground leading-snug">
+        Pick a card to fill this slot.
+      </div>
     </div>
   );
 }

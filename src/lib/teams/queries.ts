@@ -7,6 +7,8 @@ import {
   personLearnset,
   persons,
   teams,
+  type BaseStats,
+  type IVs,
   type Team,
 } from "@/lib/db/schema";
 
@@ -14,9 +16,14 @@ export type OwnedCard = {
   cardId: string;
   personId: string;
   personName: string;
+  title: string;
   discipline: string;
+  subDiscipline: string | null;
   primaryType: string;
   secondaryType: string | null;
+  rarity: "common" | "rare" | "epic" | "legendary";
+  baseStats: BaseStats;
+  ivs: IVs;
   isShiny: boolean;
   imageUrl: string;
 };
@@ -27,9 +34,14 @@ export async function ownedCardsForUser(userId: string): Promise<OwnedCard[]> {
       cardId: cards.id,
       personId: persons.id,
       personName: persons.name,
+      title: persons.title,
       discipline: persons.discipline,
+      subDiscipline: persons.subDiscipline,
       primaryType: persons.primaryType,
       secondaryType: persons.secondaryType,
+      rarity: persons.rarity,
+      baseStats: persons.baseStats,
+      ivs: cards.ivs,
       isShiny: cards.isShiny,
       imageUrl: persons.imageUrl,
     })
