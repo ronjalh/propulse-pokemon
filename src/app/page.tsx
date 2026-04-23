@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { auth } from "@/auth";
+import { AdminGrantBanner } from "@/components/layout/AdminGrantBanner";
 import { CreditsBadge } from "@/components/layout/CreditsBadge";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { PropulseLogo } from "@/components/icons/PropulseLogo";
@@ -84,6 +85,8 @@ export default async function HomePage() {
           <ThemeToggle />
         </div>
       </header>
+
+      <AdminGrantBanner userId={userId} />
 
       <div className="w-full max-w-2xl flex items-center gap-4">
         <PropulseLogo size={72} />

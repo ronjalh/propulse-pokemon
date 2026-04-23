@@ -32,6 +32,10 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   lastDailyRewardAt: timestamp("last_daily_reward_at", { withTimezone: true }),
   dailyStreakDay: integer("daily_streak_day").notNull().default(0),
+  /** When the user last dismissed their notification banner. Anything newer = unread. */
+  lastNotificationsSeenAt: timestamp("last_notifications_seen_at", {
+    withTimezone: true,
+  }),
 });
 
 export const accounts = pgTable(
