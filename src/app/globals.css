@@ -131,3 +131,62 @@
     @apply font-sans;
   }
 }
+
+/* ───────────────── Shiny "Feminist" card treatment ─────────────────
+   Rainbow outer glow + animated white sweep. Applied to cards with the
+   `.shiny-card` class (set conditionally in PropulseCard). */
+.shiny-card {
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.6),
+    0 0 18px 4px rgba(255, 100, 200, 0.55),
+    0 0 32px 8px rgba(100, 200, 255, 0.4);
+  animation: shiny-rainbow-pulse 3.5s ease-in-out infinite;
+}
+
+@keyframes shiny-rainbow-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.6),
+      0 0 18px 4px rgba(255, 100, 200, 0.55),
+      0 0 32px 8px rgba(100, 200, 255, 0.4);
+  }
+  25% {
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.7),
+      0 0 18px 4px rgba(255, 220, 80, 0.6),
+      0 0 32px 8px rgba(180, 100, 255, 0.45);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.75),
+      0 0 18px 4px rgba(100, 255, 180, 0.6),
+      0 0 32px 8px rgba(255, 150, 80, 0.45);
+  }
+  75% {
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.7),
+      0 0 18px 4px rgba(80, 180, 255, 0.6),
+      0 0 32px 8px rgba(255, 100, 200, 0.45);
+  }
+}
+
+.shiny-sweep {
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.85) 50%,
+    transparent 70%
+  );
+  background-size: 250% 100%;
+  opacity: 0.55;
+  animation: shiny-sweep 2.8s linear infinite;
+}
+
+@keyframes shiny-sweep {
+  0% {
+    background-position: 150% 0;
+  }
+  100% {
+    background-position: -50% 0;
+  }
+}

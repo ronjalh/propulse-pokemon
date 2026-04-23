@@ -59,19 +59,39 @@ export function PropulseCard({ card, person, size = "md" }: Props) {
         "relative rounded-2xl border-2 overflow-hidden shadow-lg text-white flex flex-col",
         SIZE_CLASSES[size],
         rarityBorderClass(person.rarity),
-        shiny && "ring-2 ring-pink-400/70 shadow-pink-500/40",
+        shiny && "shiny-card",
       )}
       style={{ background: gradient }}
     >
       {shiny && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-30 mix-blend-overlay"
-          style={{
-            background:
-              "linear-gradient(125deg, transparent 30%, white 50%, transparent 70%)",
-          }}
-        />
+        <>
+          {/* Rainbow holographic tint */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-45 mix-blend-color-dodge"
+            style={{
+              background:
+                "linear-gradient(135deg, #ff3d8b 0%, #ffb020 20%, #fff04a 40%, #3dff9f 60%, #40c4ff 80%, #b45dff 100%)",
+            }}
+          />
+          {/* Animated white shimmer sweep */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 shiny-sweep mix-blend-overlay"
+          />
+          {/* Bright "SHINY" badge top-right */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute top-2 right-2 z-10 px-2 py-0.5 rounded-full text-[0.55rem] font-bold tracking-wide text-white shadow"
+            style={{
+              background:
+                "linear-gradient(90deg, #ff3d8b, #ffb020, #fff04a, #3dff9f, #40c4ff, #b45dff)",
+              textShadow: "0 1px 2px rgba(0,0,0,0.6)",
+            }}
+          >
+            ✨ SHINY
+          </div>
+        </>
       )}
 
       {/* header */}
