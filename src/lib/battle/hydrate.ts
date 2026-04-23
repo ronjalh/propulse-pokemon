@@ -10,7 +10,7 @@ import {
   teams,
   type TeamMoveSets,
 } from "@/lib/db/schema";
-import { computeFinalStats, generateIVs } from "@/lib/cards/stats";
+import { battleLevelFor, computeFinalStats, generateIVs } from "@/lib/cards/stats";
 import { resolveTypes } from "@/lib/data/type-mapping";
 import type { BattleCard, BattleSide, MoveSlot } from "./types";
 
@@ -43,6 +43,7 @@ export async function hydrateSide(
       ownerId: cards.ownerId,
       isShiny: cards.isShiny,
       ivs: cards.ivs,
+      level: cards.level,
       personId: persons.id,
       personName: persons.name,
       discipline: persons.discipline,
@@ -89,7 +90,7 @@ export async function hydrateSide(
     const card = byCardId.get(cardId);
     if (!card) return { code: "invalid" };
     const ivs = card.ivs ?? generateIVs(cardId);
-    const stats = computeFinalStats(card.baseStats, ivs, card.isShiny);
+    const stats = computeFinalStats(card.baseStats, ivs, card.isShiny, card.level);
     const types = resolveTypes(
       card.discipline as Parameters<typeof resolveTypes>[0],
       card.subDiscipline ?? undefined,
@@ -109,9 +110,9 @@ export async function hydrateSide(
 
     battleCards.push({
       cardId,
-      personName: card.personName,
+      personName: `${card.personName} · LV${card.level}`,
       types,
-      level: 50,
+      level: battleLevelFor(card.level),
       maxHp: stats.hp,
       currentHp: stats.hp,
       stats,
@@ -143,6 +144,7 @@ export async function hydrateSingleCard(
       ownerId: cards.ownerId,
       isShiny: cards.isShiny,
       ivs: cards.ivs,
+      level: cards.level,
       personId: persons.id,
       personName: persons.name,
       discipline: persons.discipline,
@@ -180,7 +182,7 @@ export async function hydrateSingleCard(
   const picked = shuffled.slice(0, 4);
 
   const ivs = card.ivs ?? generateIVs(cardId);
-  const stats = computeFinalStats(card.baseStats, ivs, card.isShiny);
+  const stats = computeFinalStats(card.baseStats, ivs, card.isShiny, card.level);
   const types = resolveTypes(
     card.discipline as Parameters<typeof resolveTypes>[0],
     card.subDiscipline ?? undefined,
@@ -196,9 +198,9 @@ export async function hydrateSingleCard(
 
   const battleCard: BattleCard = {
     cardId,
-    personName: card.personName,
+    personName: `${card.personName} · LV${card.level}`,
     types,
-    level: 50,
+    level: battleLevelFor(card.level),
     maxHp: stats.hp,
     currentHp: stats.hp,
     stats,

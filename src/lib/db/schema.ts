@@ -170,6 +170,8 @@ export const cards = pgTable(
       .$type<string[]>()
       .notNull()
       .default(sql`'[]'::jsonb`),
+    /** Card level 1..5. Leveled up by consuming duplicates of the same person. */
+    level: integer("level").notNull().default(1),
     pulledAt: timestamp("pulled_at").notNull().defaultNow(),
   },
   (t) => [

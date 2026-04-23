@@ -42,13 +42,20 @@ export function rollShiny(cardId: string, baseRate = 64): boolean {
   return fnv1a(`${cardId}:shiny`) % baseRate === 0;
 }
 
-/** Classic Pokémon stat formula at level 50, no nature multiplier yet. */
+/** Maps a card's level (1..5) to its effective battle level. */
+export function battleLevelFor(cardLevel: number): number {
+  const lvl = Math.max(1, Math.min(5, cardLevel));
+  return 50 + (lvl - 1) * 10; // lvl1 → 50, lvl5 → 90
+}
+
+/** Classic Pokémon stat formula. Card level defaults to 1 (battle level 50). */
 export function computeFinalStats(
   base: BaseStats,
   ivs: IVs,
   isShiny: boolean,
+  cardLevel: number = 1,
 ): BaseStats {
-  const level = 50;
+  const level = battleLevelFor(cardLevel);
   const shinyMult = isShiny ? 1.1 : 1;
   const calc = (b: number, iv: number, isHp = false) => {
     const raw = Math.floor(((2 * b + iv) * level) / 100);
@@ -65,3 +72,21 @@ export function computeFinalStats(
     speed: calc(base.speed, ivs.speed),
   };
 }
+
+/**
+ * How many duplicate cards you need to burn to advance from this level
+ * to the next. `null` = already max level.
+ *   lvl 1→2: 1 dup
+ *   lvl 2→3: 2 dups
+ *   lvl 3→4: 3 dups
+ *   lvl 4→5: 5 dups
+ */
+export const LEVEL_UP_COST: Record<number, number | null> = {
+  1: 1,
+  2: 2,
+  3: 3,
+  4: 5,
+  5: null,
+};
+
+export const MAX_CARD_LEVEL = 5;

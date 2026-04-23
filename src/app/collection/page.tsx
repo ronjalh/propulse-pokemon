@@ -154,12 +154,18 @@ export default async function CollectionPage({ searchParams }: PageProps) {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center">
           {pairs.map((pair) => (
-            <PropulseCard
+            <Link
               key={pair.card.id}
-              card={pair.card}
-              person={pair.person}
-              size="md"
-            />
+              href={`/collection/${pair.card.id}/level-up`}
+              className="block rounded-2xl transition-transform hover:scale-[1.02]"
+              title={`Level up ${pair.person.name}`}
+            >
+              <PropulseCard
+                card={pair.card}
+                person={pair.person}
+                size="md"
+              />
+            </Link>
           ))}
         </div>
       )}

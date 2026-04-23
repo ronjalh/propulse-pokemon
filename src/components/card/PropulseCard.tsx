@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 type Size = "sm" | "md" | "lg";
 
 type Props = {
-  card: Pick<Card, "id" | "isShiny" | "ivs">;
+  card: Pick<Card, "id" | "isShiny" | "ivs"> & { level?: number };
   person: Pick<
     Person,
     | "name"
@@ -47,7 +47,13 @@ function StatRow({ label, value, max = 200 }: { label: string; value: number; ma
 export function PropulseCard({ card, person, size = "md" }: Props) {
   const primary = TYPE_COLORS[person.primaryType];
   const secondary = person.secondaryType ? TYPE_COLORS[person.secondaryType] : primary;
-  const final = computeFinalStats(person.baseStats as BaseStats, card.ivs as IVs, card.isShiny);
+  const cardLevel = card.level ?? 1;
+  const final = computeFinalStats(
+    person.baseStats as BaseStats,
+    card.ivs as IVs,
+    card.isShiny,
+    cardLevel,
+  );
 
   const gradient = `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`;
   const shiny = card.isShiny;
@@ -101,6 +107,12 @@ export function PropulseCard({ card, person, size = "md" }: Props) {
           <div className="text-[0.65rem] opacity-80 leading-tight truncate">
             {person.title}
           </div>
+          <span
+            className="mt-1 inline-block px-1.5 py-0.5 rounded bg-black/40 text-[0.55rem] tracking-wide font-semibold"
+            aria-label={`Level ${cardLevel}`}
+          >
+            LV {cardLevel}
+          </span>
         </div>
         <div className="flex flex-col items-end gap-0.5 shrink-0 ml-2">
           <span className="px-1.5 py-0.5 rounded bg-black/30 text-[0.65rem] font-semibold">
