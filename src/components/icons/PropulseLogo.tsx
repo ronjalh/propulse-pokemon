@@ -41,27 +41,19 @@ export function PropulseLogo({ size = 64, className }: Props) {
       {/* Middle band */}
       <rect x="4" y="37" width="72" height="6" fill="#1E3A8A" />
 
-      {/* Propulse-style "P" on the blue half — clean sans-serif,
-          left-aligned to read like a brand mark. */}
-      <g transform="translate(16 10)" fill="#F8FAFC">
-        <path
-          d="
-            M 0 0
-            L 0 22
-            L 6 22
-            L 6 14
-            L 12 14
-            C 18 14 22 10.5 22 7
-            C 22 3 18 0 12 0
-            Z
-            M 6 4
-            L 12 4
-            C 14.5 4 16 5.2 16 7
-            C 16 8.8 14.5 10 12 10
-            L 6 10
-            Z
-          "
-        />
+      {/* Propulse-style "P" on the blue half — thin stroked glyph. */}
+      <g
+        transform="translate(33 14)"
+        fill="none"
+        stroke="#F8FAFC"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* Stem */}
+        <line x1="0" y1="0" x2="0" y2="16" />
+        {/* Bowl */}
+        <path d="M 0 0 H 7 A 4 4 0 0 1 7 8 H 0" />
       </g>
 
       {/* Center button — classic gray */}
