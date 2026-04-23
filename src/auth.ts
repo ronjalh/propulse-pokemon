@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import { eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -11,6 +12,17 @@ import {
 } from "@/lib/db/schema";
 
 const PROPULSE_DOMAIN = "@propulsentnu.no";
+
+/** Emails in ADMIN_EMAILS env var (comma-separated) are auto-promoted on sign-in. */
+function adminEmailSet(): Set<string> {
+  const raw = process.env.ADMIN_EMAILS ?? "";
+  return new Set(
+    raw
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db, {
@@ -50,6 +62,15 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
       const email = (user?.email ?? "").toLowerCase();
       if (!email.endsWith(PROPULSE_DOMAIN)) return false;
+
+      // Auto-promote admins on sign-in if their email is in ADMIN_EMAILS.
+      // Runs after the Drizzle adapter has upserted the user row.
+      if (user?.id && adminEmailSet().has(email)) {
+        await db
+          .update(users)
+          .set({ isAdmin: true })
+          .where(eq(users.id, user.id));
+      }
       return true;
     },
     async session({ session, user }) {

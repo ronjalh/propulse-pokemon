@@ -8,6 +8,7 @@ import {
   History,
   Layers,
   Package,
+  ShieldAlert,
   Swords,
   Users,
 } from "lucide-react";
@@ -18,7 +19,7 @@ import { CreditsBadge } from "@/components/layout/CreditsBadge";
 import { PropulseLogo } from "@/components/icons/PropulseLogo";
 import { TreasureChest } from "@/components/icons/TreasureChest";
 import { db } from "@/lib/db/client";
-import { cards, persons } from "@/lib/db/schema";
+import { cards, persons, users } from "@/lib/db/schema";
 import { getBalance } from "@/lib/economy/credits";
 import { count, eq } from "drizzle-orm";
 
@@ -29,7 +30,7 @@ export default async function HomePage() {
 
   const userId = session.user.id;
 
-  const [collection, pokedex, balance] = await Promise.all([
+  const [collection, pokedex, balance, meRow] = await Promise.all([
     db
       .select({ n: count() })
       .from(cards)
@@ -37,7 +38,14 @@ export default async function HomePage() {
       .then((r) => r[0]?.n ?? 0),
     db.select({ n: count() }).from(persons).then((r) => r[0]?.n ?? 0),
     getBalance(userId),
+    db
+      .select({ isAdmin: users.isAdmin })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1)
+      .then((r) => r[0]),
   ]);
+  const isAdmin = meRow?.isAdmin ?? false;
 
   return (
     <main className="min-h-screen flex flex-col items-center p-6 gap-8">
@@ -111,6 +119,14 @@ export default async function HomePage() {
           icon={History}
         />
         <NavLink href="/trade" label="Trade" icon={Handshake} />
+        {isAdmin && (
+          <NavLink
+            href="/admin"
+            label="Admin"
+            icon={ShieldAlert}
+            accent="rose"
+          />
+        )}
       </nav>
     </main>
   );
@@ -142,14 +158,19 @@ function NavLink({
   icon: Icon,
   customIcon,
   disabled,
+  accent = "sky",
 }: {
   href: string;
   label: string;
   icon?: LucideIcon;
   customIcon?: React.ReactNode;
   disabled?: boolean;
+  accent?: "sky" | "rose";
 }) {
   const iconNode = customIcon ?? (Icon ? <Icon className="size-6" /> : null);
+  const iconColour = accent === "rose" ? "text-rose-500" : "text-sky-500";
+  const borderColour =
+    accent === "rose" ? "border-rose-500/40" : "";
   if (disabled) {
     return (
       <div className="rounded-lg border p-4 text-center text-muted-foreground cursor-not-allowed flex flex-col items-center gap-1.5">
@@ -162,9 +183,9 @@ function NavLink({
   return (
     <Link
       href={href}
-      className="rounded-lg border p-4 text-center hover:bg-accent transition-colors flex flex-col items-center gap-1.5 font-medium"
+      className={`rounded-lg border p-4 text-center hover:bg-accent transition-colors flex flex-col items-center gap-1.5 font-medium ${borderColour}`}
     >
-      <span className="text-sky-500">{iconNode}</span>
+      <span className={iconColour}>{iconNode}</span>
       <span>{label}</span>
     </Link>
   );
