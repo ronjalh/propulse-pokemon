@@ -4,6 +4,7 @@ import {
   text,
   timestamp,
   integer,
+  bigint,
   boolean,
   primaryKey,
   jsonb,
@@ -295,3 +296,45 @@ export const teams = pgTable(
 
 export type Team = typeof teams.$inferSelect;
 export type NewTeam = typeof teams.$inferInsert;
+
+// ─────────────────────────────────────────────────────────────
+// Battle history — persisted final state + turn log for replays
+// ─────────────────────────────────────────────────────────────
+
+export type TurnLogEntry = {
+  turn: number;
+  /** Events produced by resolveTurn for this turn. */
+  events: unknown[];
+  /** State snapshot AFTER this turn resolved. */
+  stateAfter: unknown;
+};
+
+export const battles = pgTable(
+  "battles",
+  {
+    id: uuid("id").primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    endedAt: timestamp("ended_at", { withTimezone: true }),
+    p1Id: text("p1_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "set null" }),
+    p2Id: text("p2_id").references(() => users.id, { onDelete: "set null" }),
+    winnerId: text("winner_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    rngSeed: bigint("rng_seed", { mode: "number" }).notNull(),
+    initialState: jsonb("initial_state").notNull(),
+    finalState: jsonb("final_state"),
+    turnLog: jsonb("turn_log").$type<TurnLogEntry[]>().notNull().default([]),
+    turnsPlayed: integer("turns_played").notNull().default(0),
+  },
+  (t) => [
+    index("battles_p1_idx").on(t.p1Id, t.createdAt),
+    index("battles_p2_idx").on(t.p2Id, t.createdAt),
+  ],
+);
+
+export type Battle = typeof battles.$inferSelect;
+export type NewBattle = typeof battles.$inferInsert;

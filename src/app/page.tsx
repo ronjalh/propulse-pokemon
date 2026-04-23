@@ -81,6 +81,7 @@ export default async function HomePage() {
         <NavLink href="/pokedex" label="Pokédex" />
         <NavLink href="/teams" label="My Teams" />
         <NavLink href="/battle/new" label="Battle" />
+        <NavLink href="/battle/history" label="Battle History" />
         <NavLink href="/trade" label="Trade" disabled />
       </nav>
     </main>

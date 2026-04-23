@@ -2,6 +2,11 @@ import "server-only";
 import { Redis } from "@upstash/redis";
 
 import { resolveTurn, checkWinCondition } from "./engine";
+import {
+  persistBattleCreate,
+  persistBattleEnd,
+  persistTurn,
+} from "./persist";
 import type { BattleState, Intent } from "./types";
 import { publishBattleEvent } from "@/lib/realtime/server";
 
@@ -140,12 +145,29 @@ export async function createBattle(
     pendingOpponent: null,
   };
   await setState(battleId, initial);
+  await persistBattleCreate({
+    battleId,
+    p1Id: state.sides[0].playerId,
+    p2Id: realPlayerId(state.sides[1].playerId),
+    rngSeed: state.rngSeed,
+    initialState: state,
+  });
   await publishBattleEvent(battleId, {
     kind: "turn-start",
     turn: initial.turn,
     deadlineMs: initial.deadlineMs,
   });
   return initial;
+}
+
+/**
+ * Skip persisting `mirror:<id>` and `pending:<email>` pseudo-player-ids
+ * to the DB fk column — they reference nothing.
+ */
+function realPlayerId(id: string): string | null {
+  if (id.startsWith("mirror:")) return null;
+  if (id.startsWith("pending:")) return null;
+  return id;
 }
 
 /**
@@ -166,6 +188,13 @@ export async function createPendingBattle(
     pendingOpponent,
   };
   await setState(battleId, initial);
+  await persistBattleCreate({
+    battleId,
+    p1Id: state.sides[0].playerId,
+    p2Id: realPlayerId(state.sides[1].playerId),
+    rngSeed: state.rngSeed,
+    initialState: state,
+  });
   return initial;
 }
 
@@ -253,6 +282,13 @@ export async function submitIntent(
   // Clear per-turn inbox so the next turn starts fresh.
   await redis().del(...keys);
 
+  // Persist this turn to Postgres for replay.
+  await persistTurn(battleId, {
+    turn: state.turn,
+    events: result.events,
+    stateAfter: result.newState,
+  });
+
   await publishBattleEvent(battleId, {
     kind: "turn-resolved",
     turn: state.turn,
@@ -261,8 +297,7 @@ export async function submitIntent(
   });
 
   if (next.winnerId) {
-    // Battle ended — publish terminal event. Postgres persistence is handled
-    // separately by the `battle-history` skill subscribing to this event.
+    await persistBattleEnd(battleId, result.newState);
     await publishBattleEvent(battleId, {
       kind: "battle-ended",
       winnerId: next.winnerId,
@@ -317,6 +352,7 @@ export async function enforceTurnTimeout(battleId: string): Promise<
   if (!casRes.ok) return { status: "still-live" }; // someone else resolved first
 
   await redis().del(...keys);
+  await persistBattleEnd(battleId, next);
   await publishBattleEvent(battleId, {
     kind: "battle-ended",
     winnerId: winnerId ?? forfeiterId, // engine unions require a string
