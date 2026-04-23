@@ -77,6 +77,46 @@ export function BattleScreen({
     setLog((prev) => [...prev, { id: logSeq.current, text }].slice(-30));
   }
 
+  // Polling fallback — fetch state every 2s so the UI stays in sync even if
+  // Pusher drops events or isn't configured. Live Pusher events (below) will
+  // usually arrive sooner; poll just catches anything missed.
+  useEffect(() => {
+    if (state.winnerId) return;
+    let cancelled = false;
+    const id = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/battle/${battleId}/state`, {
+          cache: "no-store",
+        });
+        if (!res.ok || cancelled) return;
+        const slim = (await res.json()) as SlimTurnDelta & {
+          deadlineMs: number;
+          phase: string;
+          version: number;
+        };
+        setState((prev) => {
+          // Skip if we already have this turn or a newer one (Pusher won the race).
+          if (slim.turn < prev.turn) return prev;
+          if (slim.turn === prev.turn && slim.winnerId === prev.winnerId) {
+            // Still merge — active-index / hp could have changed within turn.
+            return applyDelta(prev, slim);
+          }
+          return applyDelta(prev, slim);
+        });
+        setDeadlineMs((prev) =>
+          slim.deadlineMs && slim.deadlineMs > 0 ? slim.deadlineMs : prev,
+        );
+        if (slim.turn > state.turn) setIntentSent(false);
+      } catch {
+        /* ignore poll errors */
+      }
+    }, 2000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [battleId, state.winnerId, state.turn]);
+
   // Stream battle events from Pusher.
   useBattleChannel(battleId, (event: BattleEventPayload) => {
     switch (event.kind) {
