@@ -7,6 +7,7 @@ import { CreditsBadge } from "@/components/layout/CreditsBadge";
 import { listTeamsForUser, ownedCardsForUser } from "@/lib/teams/queries";
 import {
   createBattleAction,
+  createQuick1v1ChallengeAction,
   createQuickSoloBattleAction,
   createSoloTestBattleAction,
 } from "@/lib/battle/actions";
@@ -40,16 +41,57 @@ export default async function NewBattlePage({ searchParams }: PageProps) {
         </div>
       )}
 
-      {/* Quick 1v1 — works with any single card, no team needed */}
+      {/* 1v1 vs another player — no team required */}
+      {ownedCards.length > 0 && (
+        <form
+          action={createQuick1v1ChallengeAction}
+          className="rounded-lg border p-4 space-y-3"
+        >
+          <div className="font-semibold">1v1 vs another player</div>
+          <p className="text-xs text-muted-foreground">
+            Pick one card, share the link. Opponent picks their own card when
+            they accept. No team required.
+          </p>
+          <label className="block text-sm">
+            Your card
+            <select
+              name="cardId"
+              required
+              className="mt-1 w-full rounded border bg-background p-2 text-sm"
+            >
+              {ownedCards.map((c) => (
+                <option key={c.cardId} value={c.cardId}>
+                  {c.personName}
+                  {c.isShiny ? " ✨" : ""} ({c.primaryType}
+                  {c.secondaryType ? `/${c.secondaryType}` : ""})
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-sm">
+            Opponent&rsquo;s Propulse email
+            <input
+              name="opponentEmail"
+              type="email"
+              required
+              placeholder="navn@propulsentnu.no"
+              className="mt-1 w-full rounded border bg-background p-2 text-sm"
+            />
+          </label>
+          <Button type="submit">Send 1v1 challenge</Button>
+        </form>
+      )}
+
+      {/* Quick 1v1 vs mirror — solo sandbox */}
       {ownedCards.length > 0 && (
         <form
           action={createQuickSoloBattleAction}
-          className="rounded-lg border p-4 space-y-3"
+          className="rounded-lg border p-4 space-y-3 border-dashed"
         >
           <div className="font-semibold">Quick 1v1 (solo vs mirror)</div>
           <p className="text-xs text-muted-foreground">
             Pick one card. 4 moves will be randomly chosen from its learnset.
-            Fastest way to test the combat loop — no team required.
+            Fastest way to test the combat loop — no team, no opponent.
           </p>
           <label className="block text-sm">
             Card
@@ -67,7 +109,9 @@ export default async function NewBattlePage({ searchParams }: PageProps) {
               ))}
             </select>
           </label>
-          <Button type="submit">Start 1v1</Button>
+          <Button type="submit" variant="outline">
+            Start mirror match
+          </Button>
         </form>
       )}
 

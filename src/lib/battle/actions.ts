@@ -86,13 +86,71 @@ export async function createBattleAction(formData: FormData): Promise<never> {
   redirect(`/battle/${battleId}`);
 }
 
+/** Challenge someone to a 1v1 with a single card (no team required). */
+export async function createQuick1v1ChallengeAction(
+  formData: FormData,
+): Promise<never> {
+  const session = await auth();
+  if (!session?.user) redirect("/signin");
+  if (!isRedisConfigured()) redirect("/battle/new?error=redis-missing");
+  const userId = session.user.id;
+
+  const cardId = String(formData.get("cardId") ?? "");
+  const opponentEmailRaw = String(formData.get("opponentEmail") ?? "").trim().toLowerCase();
+  if (!cardId || !opponentEmailRaw) {
+    redirect("/battle/new?error=missing-fields");
+  }
+  if (opponentEmailRaw === session.user.email?.toLowerCase()) {
+    redirect("/battle/new?error=cannot-challenge-self");
+  }
+
+  const ownSide = await hydrateSingleCard(cardId, userId);
+  if ("code" in ownSide) {
+    redirect(`/battle/new?error=own-team-${ownSide.code}`);
+  }
+
+  const opp = await db
+    .select({ id: users.id, email: users.email })
+    .from(users)
+    .where(eq(users.email, opponentEmailRaw))
+    .limit(1);
+
+  const battleId = crypto.randomUUID();
+  const state: BattleState = {
+    battleId,
+    turn: 1,
+    rngSeed: hashSeed(battleId),
+    sides: [
+      ownSide,
+      {
+        playerId: opp.length
+          ? opp[0].id
+          : `pending:${opponentEmailRaw}`,
+        team: [],
+        activeIndex: 0,
+      },
+    ],
+    winnerId: null,
+  };
+  await createPendingBattle(
+    battleId,
+    state,
+    opp.length
+      ? { userId: opp[0].id, email: opp[0].email }
+      : { email: opponentEmailRaw },
+  );
+
+  redirect(`/battle/${battleId}`);
+}
+
 export async function joinBattleAction(formData: FormData): Promise<never> {
   const session = await auth();
   if (!session?.user) redirect("/signin");
   const userId = session.user.id;
   const battleId = String(formData.get("battleId") ?? "");
   const teamId = String(formData.get("teamId") ?? "");
-  if (!battleId || !teamId) redirect("/");
+  const cardId = String(formData.get("cardId") ?? "");
+  if (!battleId || (!teamId && !cardId)) redirect("/");
 
   const state = await getState(battleId);
   if (!state) redirect(`/battle/${battleId}?error=no-such-battle`);
@@ -108,7 +166,11 @@ export async function joinBattleAction(formData: FormData): Promise<never> {
     (placeholderEmail && placeholderEmail === session.user.email?.toLowerCase());
   if (!invited) redirect(`/battle/${battleId}?error=not-invited`);
 
-  const side = await hydrateSide(teamId, userId);
+  // Pick the right hydrate path based on the challenger's team size.
+  const is1v1 = state.sides[0].team.length === 1;
+  const side = is1v1
+    ? await hydrateSingleCard(String(formData.get("cardId") ?? ""), userId)
+    : await hydrateSide(teamId, userId);
   if ("code" in side) redirect(`/battle/${battleId}?error=join-team-${side.code}`);
 
   const result = await joinPendingBattle(battleId, userId, side);

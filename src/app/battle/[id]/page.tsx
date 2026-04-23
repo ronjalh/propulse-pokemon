@@ -8,7 +8,7 @@ import { fetchCardMeta } from "@/lib/battle/card-meta";
 import { getState } from "@/lib/battle/session";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
-import { listTeamsForUser } from "@/lib/teams/queries";
+import { listTeamsForUser, ownedCardsForUser } from "@/lib/teams/queries";
 import { JoinBattle } from "./JoinBattle";
 import { BattleScreen } from "./BattleScreen";
 
@@ -78,24 +78,34 @@ export default async function BattlePage({ params, searchParams }: PageProps) {
         </main>
       );
     }
-    // Invitee view — pick a team to accept with.
-    const myTeams = await listTeamsForUser(userId);
+    // Invitee view — pick a team (or single card for 1v1) to accept with.
+    const is1v1 = state.sides[0].team.length === 1;
+    const myTeams = is1v1 ? [] : await listTeamsForUser(userId);
     const readyTeams = myTeams.filter(
       (t) => t.cardIds.filter(Boolean).length === 6,
     );
+    const myCards = is1v1 ? await ownedCardsForUser(userId) : [];
     return (
       <main className="min-h-screen p-6 max-w-2xl mx-auto space-y-4">
         {header}
-        <h1 className="text-2xl font-bold tracking-tight">Battle challenge</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          {is1v1 ? "1v1 challenge" : "Battle challenge"}
+        </h1>
         <p className="text-sm text-muted-foreground">
-          {state.sides[0].playerId} challenged you. Pick a team to accept.
+          {state.sides[0].playerId} challenged you.{" "}
+          {is1v1 ? "Pick a single card to accept." : "Pick a team to accept."}
         </p>
         {error && (
           <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
             {error}
           </div>
         )}
-        <JoinBattle battleId={battleId} teams={readyTeams} />
+        <JoinBattle
+          battleId={battleId}
+          mode={is1v1 ? "card" : "team"}
+          teams={readyTeams}
+          cards={myCards}
+        />
       </main>
     );
   }

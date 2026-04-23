@@ -507,24 +507,23 @@ function TurnTimer({
   deadlineMs: number;
   disabled: boolean;
 }) {
-  const [remaining, setRemaining] = useState(
-    Math.max(0, deadlineMs - Date.now()),
-  );
+  // Start null so SSR and first client render match. Populate on mount.
+  const [remaining, setRemaining] = useState<number | null>(null);
   useEffect(() => {
+    const tick = () => setRemaining(Math.max(0, deadlineMs - Date.now()));
+    tick();
     if (disabled) return;
-    const id = setInterval(() => {
-      setRemaining(Math.max(0, deadlineMs - Date.now()));
-    }, 250);
+    const id = setInterval(tick, 250);
     return () => clearInterval(id);
   }, [deadlineMs, disabled]);
-  const s = Math.ceil(remaining / 1000);
+  const s = remaining == null ? null : Math.ceil(remaining / 1000);
   return (
     <div
       className={`font-mono text-sm tabular-nums ${
-        s < 10 ? "text-destructive" : "text-muted-foreground"
+        s != null && s < 10 ? "text-destructive" : "text-muted-foreground"
       }`}
     >
-      {s}s
+      {s == null ? "—" : `${s}s`}
     </div>
   );
 }
