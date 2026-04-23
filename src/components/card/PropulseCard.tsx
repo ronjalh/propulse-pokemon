@@ -51,7 +51,7 @@ export function PropulseCard({ card, person, size = "md" }: Props) {
 
   const gradient = `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`;
   const shiny = card.isShiny;
-  const displayName = shiny ? `Feminist ${person.name}` : person.name;
+  const displayName = shiny ? `Shiny ${person.name}` : person.name;
 
   return (
     <div

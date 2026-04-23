@@ -41,20 +41,19 @@ export function PropulseLogo({ size = 64, className }: Props) {
       {/* Middle band */}
       <rect x="4" y="37" width="72" height="6" fill="#1E3A8A" />
 
-      {/* Propulse-style "P" on the blue half — thin stroked glyph. */}
-      <g
-        transform="translate(33 14)"
-        fill="none"
-        stroke="#F8FAFC"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+      {/* Propulse-style "P" on the blue half — text so it's always a
+          readable P regardless of SVG path-drawing quirks. */}
+      <text
+        x="40"
+        y="27"
+        textAnchor="middle"
+        fill="#F8FAFC"
+        fontFamily="system-ui, -apple-system, sans-serif"
+        fontSize="20"
+        fontWeight="600"
       >
-        {/* Stem */}
-        <line x1="0" y1="0" x2="0" y2="16" />
-        {/* Bowl */}
-        <path d="M 0 0 H 7 A 4 4 0 0 1 7 8 H 0" />
-      </g>
+        P
+      </text>
 
       {/* Center button — classic gray */}
       <circle
