@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useAnimate } from "framer-motion";
 import { Info, Skull } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -450,21 +450,29 @@ function CardPanel({
       : "border-sky-500/40 bg-sky-500/10";
   const headerLabel = side === "opponent" ? "Opponent" : "You";
 
+  // Imperative shake — useAnimate animates the existing DOM node instead of
+  // remounting it on hit. Keeps CardPanel's DOM stable so state updates
+  // (HP bar, banner, disabled state) propagate without interference.
+  const [scope, animate] = useAnimate<HTMLDivElement>();
+  useEffect(() => {
+    if (!hit) return;
+    animate(
+      scope.current,
+      { x: [0, -6, 5, -4, 3, -2, 0] },
+      { duration: 0.45, ease: "easeInOut" },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hit?.key]);
+
   return (
-    <motion.div
-      // Card-shake on hit. Key change retriggers the animation.
-      animate={
-        hit
-          ? { x: [0, -6, 5, -4, 3, -2, 0] }
-          : { x: 0 }
-      }
-      transition={{ duration: 0.45, ease: "easeInOut" }}
-      key={`panel-${hit?.key ?? 0}`}
+    <div
+      ref={scope}
       className={`relative rounded-lg border-2 p-3 flex gap-3 ${themeClass} ${
         card.currentHp === 0 ? "opacity-60 grayscale" : ""
       } ${side === "opponent" ? "flex-row-reverse text-right" : ""}`}
     >
-      {/* Floating damage number on hit. */}
+      {/* Floating damage number on hit. Keyed on hit.key so each new hit gets
+          its own mount/unmount cycle via AnimatePresence. */}
       <AnimatePresence>
         {hit && (
           <motion.div
@@ -532,7 +540,7 @@ function CardPanel({
         </div>
         <TeamRoster side={side} battleSide={battleSide} />
       </div>
-    </motion.div>
+    </div>
   );
 }
 
