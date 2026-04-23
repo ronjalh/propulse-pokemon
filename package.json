@@ -14,6 +14,7 @@
     "seed:roster": "tsx --env-file=.env.local scripts/seed-roster.ts",
     "seed:moves": "tsx --env-file=.env.local scripts/seed-moves.ts",
     "seed:learnsets": "tsx --env-file=.env.local scripts/seed-learnsets.ts",
+    "admin:promote": "tsx --env-file=.env.local scripts/promote-admin.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
