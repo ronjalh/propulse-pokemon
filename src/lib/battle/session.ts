@@ -28,6 +28,12 @@ export const RECONNECT_GRACE_MS = 60_000;
 
 let redisClient: Redis | null = null;
 
+export function isRedisConfigured(): boolean {
+  return Boolean(
+    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN,
+  );
+}
+
 function redis(): Redis {
   if (redisClient) return redisClient;
   const url = process.env.UPSTASH_REDIS_REST_URL;

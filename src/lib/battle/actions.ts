@@ -11,14 +11,16 @@ import { hydrateSide } from "./hydrate";
 import {
   createPendingBattle,
   createBattle,
-  joinPendingBattle,
   getState,
+  isRedisConfigured,
+  joinPendingBattle,
 } from "./session";
 import type { BattleState } from "./types";
 
 export async function createBattleAction(formData: FormData): Promise<never> {
   const session = await auth();
   if (!session?.user) redirect("/signin");
+  if (!isRedisConfigured()) redirect("/battle/new?error=redis-missing");
   const userId = session.user.id;
 
   const teamId = String(formData.get("teamId") ?? "");
@@ -117,6 +119,7 @@ export async function joinBattleAction(formData: FormData): Promise<never> {
 export async function createSoloTestBattleAction(formData: FormData): Promise<never> {
   const session = await auth();
   if (!session?.user) redirect("/signin");
+  if (!isRedisConfigured()) redirect("/battle/new?error=redis-missing");
   const userId = session.user.id;
   const teamId = String(formData.get("teamId") ?? "");
   if (!teamId) redirect("/battle/new?error=missing-fields");

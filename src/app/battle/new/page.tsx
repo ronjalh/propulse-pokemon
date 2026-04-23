@@ -113,5 +113,10 @@ function friendlyError(code: string): string {
   if (code === "missing-fields") return "Fill in both team and opponent email.";
   if (code === "cannot-challenge-self") return "You can't challenge yourself — use the solo test instead.";
   if (code.startsWith("own-team-")) return "There's something wrong with your team — open it in the editor and fix it.";
+  if (code === "redis-missing") {
+    return (
+      "Battles need Upstash Redis set up. Create a free database at upstash.com → copy REST URL + token → add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN to .env.local, then restart the dev server. Pusher keys are also needed for live updates."
+    );
+  }
   return `Error: ${code}`;
 }
