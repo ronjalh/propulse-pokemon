@@ -9,6 +9,7 @@ import {
   Layers,
   Package,
   Swords,
+  User,
   Users,
 } from "lucide-react";
 import { auth } from "@/auth";
@@ -96,6 +97,7 @@ export default async function HomePage() {
           label="Daily Rewards"
           customIcon={<TreasureChest state="closed" size={28} />}
         />
+        <NavLink href="/profile" label="My Profile" icon={User} />
         <NavLink href="/packs" label="Open a pack" icon={Package} />
         <NavLink href="/collection" label="My Collection" icon={Layers} />
         <NavLink href="/pokedex" label="Pokédex" icon={BookOpen} />
