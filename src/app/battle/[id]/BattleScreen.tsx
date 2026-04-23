@@ -130,7 +130,7 @@ export function BattleScreen({
         // Log events using the current (pre-update) state for name lookups —
         // names are stable across turns, so this is fine. Keep the setState
         // updater pure (React 19 strict mode can re-invoke it).
-        for (const e of event.events) pushLog(renderEvent(e, state));
+        for (const e of event.events) pushLog(renderEvent(e, state, meSideIndex));
         setState((prev) => applyDelta(prev, event.delta));
         break;
       }
@@ -148,7 +148,7 @@ export function BattleScreen({
         pushLog(`${event.playerId} locked in their team.`);
         break;
       default:
-        pushLog(renderEvent(event as BattleEvent, state));
+        pushLog(renderEvent(event as BattleEvent, state, meSideIndex));
     }
   });
 
@@ -167,7 +167,20 @@ export function BattleScreen({
         setError(body.error ?? `HTTP ${res.status}`);
       } else {
         setIntentSent(true);
-        pushLog(`Submitted — waiting for opponent…`);
+        // Pretty-log what the player picked so they can sanity-check before
+        // the turn resolves.
+        const myActive = state.sides[meSideIndex].team[state.sides[meSideIndex].activeIndex];
+        if (intent.kind === "move") {
+          const slot = myActive.moves[intent.moveIndex];
+          pushLog(
+            `You chose: ${myActive.personName} · ${slot?.move.name ?? "move"} — waiting for opponent…`,
+          );
+        } else {
+          const target = state.sides[meSideIndex].team[intent.switchTo];
+          pushLog(
+            `You chose: switch to ${target?.personName ?? "…"} — waiting for opponent…`,
+          );
+        }
       }
     } catch (e) {
       setError(String(e));
@@ -217,23 +230,19 @@ export function BattleScreen({
         <EndScreen state={state} meSideIndex={meSideIndex} />
       ) : (
         <div className="rounded-lg border p-3 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold">
-              Turn {state.turn} ·{" "}
-              {intentSent
-                ? "waiting for opponent…"
+          {/* Big turn-state banner — impossible to miss whose turn it is. */}
+          <TurnBanner
+            turn={state.turn}
+            state={
+              intentSent
+                ? "waiting"
                 : mustSwitch
-                  ? "pick a replacement"
-                  : "choose an action"}
-            </div>
-            <TurnTimer deadlineMs={deadlineMs} disabled={intentSent} />
-          </div>
-
-          {mustSwitch && (
-            <div className="rounded border border-amber-500/40 bg-amber-500/10 p-2 text-xs">
-              <b>{me.personName}</b> fainted — send in a replacement.
-            </div>
-          )}
+                  ? "must-switch"
+                  : "your-turn"
+            }
+            deadlineMs={deadlineMs}
+            activeName={me.personName}
+          />
 
           <div className="flex gap-2 text-xs">
             <button
@@ -500,6 +509,45 @@ function OpponentAvatar({ info }: { info: OpponentInfo }) {
   );
 }
 
+/** Prominent banner at the top of the action panel: YOUR TURN / WAITING / FAINTED. */
+function TurnBanner({
+  state,
+  turn,
+  deadlineMs,
+  activeName,
+}: {
+  state: "your-turn" | "waiting" | "must-switch";
+  turn: number;
+  deadlineMs: number;
+  activeName: string;
+}) {
+  const styles =
+    state === "your-turn"
+      ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+      : state === "must-switch"
+        ? "border-amber-500/60 bg-amber-500/10 text-amber-700 dark:text-amber-300 animate-pulse"
+        : "border-muted-foreground/30 bg-muted/40 text-muted-foreground";
+  const label =
+    state === "your-turn"
+      ? "YOUR TURN"
+      : state === "must-switch"
+        ? `⚠ ${activeName.toUpperCase()} FAINTED — PICK A REPLACEMENT`
+        : "WAITING FOR OPPONENT…";
+  return (
+    <div
+      className={`rounded-lg border-2 px-4 py-3 flex items-center justify-between gap-3 font-bold ${styles}`}
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-xs uppercase tracking-wide opacity-75 tabular-nums">
+          Turn {turn}
+        </span>
+        <span className="text-base tracking-wide">{label}</span>
+      </div>
+      <TurnTimer deadlineMs={deadlineMs} disabled={state !== "your-turn"} />
+    </div>
+  );
+}
+
 function TurnTimer({
   deadlineMs,
   disabled,
@@ -570,47 +618,102 @@ function EndScreen({
 
 // ── Event rendering ────────────────────────────────────────────────────────
 
-function nameFor(cardId: string, state: BattleState): string {
-  for (const side of state.sides) {
-    for (const c of side.team) {
-      if (c.cardId === cardId) return c.personName;
-    }
+type Ctx = { state: BattleState; meSideIndex: number };
+
+/** Find which side owns a given cardId. Returns -1 if not on any side. */
+function sideIndexOf(cardId: string, state: BattleState): number {
+  for (let i = 0; i < state.sides.length; i++) {
+    if (state.sides[i].team.some((c) => c.cardId === cardId)) return i;
   }
-  return cardId.slice(0, 6);
+  return -1;
 }
 
-function renderEvent(event: BattleEvent, state: BattleState): string {
+/** "You · Milton" or "Foe · Simen". */
+function labelledName(cardId: string, ctx: Ctx): string {
+  const side = sideIndexOf(cardId, ctx.state);
+  const name = (() => {
+    for (const s of ctx.state.sides) {
+      for (const c of s.team) {
+        if (c.cardId === cardId) return c.personName;
+      }
+    }
+    return cardId.slice(0, 6);
+  })();
+  if (side === -1) return name;
+  return side === ctx.meSideIndex ? `You · ${name}` : `Foe · ${name}`;
+}
+
+/** Returns a user-facing display name for a move (falls back to moveId slug). */
+function moveLabel(ev: { moveId: string; moveName?: string }): string {
+  return ev.moveName ?? ev.moveId.replace(/_/g, " ");
+}
+
+function ownerLabel(playerId: string, ctx: Ctx): string {
+  const idx = ctx.state.sides.findIndex((s) => s.playerId === playerId);
+  if (idx === -1) return playerId.slice(0, 8);
+  return idx === ctx.meSideIndex ? "You" : "Foe";
+}
+
+function renderEvent(event: BattleEvent, state: BattleState, meSideIndex: number): string {
+  const ctx: Ctx = { state, meSideIndex };
   switch (event.kind) {
     case "move-used": {
-      const who = nameFor(event.actorId, state);
-      const target = nameFor(event.targetId, state);
+      const who = labelledName(event.actorId, ctx);
+      const target = labelledName(event.targetId, ctx);
+      const name = moveLabel(event);
       const tags = [
-        event.crit ? "crit!" : null,
-        event.effectiveness > 1 ? "super effective" : null,
-        event.effectiveness < 1 && event.effectiveness > 0 ? "not very effective" : null,
+        event.crit ? "CRIT!" : null,
+        event.effectiveness >= 2 ? "super effective" : null,
+        event.effectiveness > 0 && event.effectiveness < 1 ? "not very effective" : null,
         event.stab ? "STAB" : null,
       ].filter(Boolean);
-      const tagStr = tags.length ? ` (${tags.join(", ")})` : "";
-      return `${who} used ${event.moveId} on ${target} — ${event.damage} dmg${tagStr}`;
+      const tagStr = tags.length ? ` · ${tags.join(", ")}` : "";
+      return `${who} used ${name} on ${target} — ${event.damage} dmg${tagStr}`;
     }
     case "miss":
-      return `${nameFor(event.actorId, state)} missed!`;
-    case "no-effect":
-      return `${nameFor(event.actorId, state)}'s move had no effect.`;
-    case "switch-in":
-      return `${event.playerId} sent in ${nameFor(event.cardId, state)}`;
+      return `${labelledName(event.actorId, ctx)}'s ${moveLabel(event)} missed!`;
+    case "no-effect": {
+      const who = labelledName(event.actorId, ctx);
+      const move = moveLabel(event);
+      switch (event.reason) {
+        case "immune":
+          return `${move} has no effect on that target (immune).`;
+        case "no-pp":
+          return `${who} has no PP left on ${move}!`;
+        case "status-failed":
+          return `${move} failed — the target's already affected.`;
+        case "no-handler":
+          return `${move} fizzled (effect not yet implemented).`;
+        case "invalid-slot":
+          return `${who} fumbled — invalid move slot.`;
+        default:
+          return `${who}'s ${move} had no effect.`;
+      }
+    }
+    case "switch-in": {
+      const owner = ownerLabel(event.playerId, ctx);
+      return `${owner} sent in ${labelledName(event.cardId, ctx).replace(/^(You|Foe) · /, "")}.`;
+    }
     case "status-inflicted":
-      return `${nameFor(event.actorId, state)} is now ${event.status}.`;
+      return `${labelledName(event.actorId, ctx)} is now ${event.status}!`;
     case "status-tick":
-      return `${nameFor(event.actorId, state)} took ${event.damage} ${event.status} damage.`;
+      return `${labelledName(event.actorId, ctx)} took ${event.damage} ${event.status} damage.`;
     case "cant-move":
-      return `${nameFor(event.actorId, state)} couldn't move (${event.reason}).`;
+      return `${labelledName(event.actorId, ctx)} couldn't move (${event.reason}).`;
     case "hurt-in-confusion":
-      return `${nameFor(event.actorId, state)} hurt itself in confusion — ${event.damage} dmg.`;
+      return `${labelledName(event.actorId, ctx)} hurt itself in confusion — ${event.damage} dmg.`;
     case "faint":
-      return `${nameFor(event.actorId, state)} fainted!`;
-    case "battle-ended":
-      return `Battle ended. Winner: ${event.winnerId}`;
+      return `${labelledName(event.actorId, ctx)} fainted!`;
+    case "battle-ended": {
+      const sideIdx = state.sides.findIndex((s) => s.playerId === event.winnerId);
+      const winner =
+        sideIdx === -1
+          ? `${event.winnerId.slice(0, 8)}`
+          : sideIdx === meSideIndex
+            ? "You"
+            : "Foe";
+      return `Battle ended — ${winner} wins.`;
+    }
     default: {
       const _exhaustive: never = event;
       return JSON.stringify(event);

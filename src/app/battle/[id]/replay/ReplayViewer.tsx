@@ -99,7 +99,7 @@ export function ReplayViewer(props: Props) {
           </div>
         ) : (
           eventsThisStep.map((e, i) => (
-            <div key={i}>{renderEvent(e, state)}</div>
+            <div key={i}>{renderEvent(e, state, meSideIndex === -1 ? 0 : meSideIndex)}</div>
           ))
         )}
       </div>
@@ -180,47 +180,99 @@ function ReplayCard({
   );
 }
 
-function nameFor(cardId: string, state: BattleState): string {
-  for (const side of state.sides) {
-    for (const c of side.team) {
-      if (c.cardId === cardId) return c.personName;
-    }
+type Ctx = { state: BattleState; meSideIndex: number };
+
+function sideIndexOf(cardId: string, state: BattleState): number {
+  for (let i = 0; i < state.sides.length; i++) {
+    if (state.sides[i].team.some((c) => c.cardId === cardId)) return i;
   }
-  return cardId.slice(0, 6);
+  return -1;
 }
 
-function renderEvent(event: BattleEvent, state: BattleState): string {
+function labelledName(cardId: string, ctx: Ctx): string {
+  const side = sideIndexOf(cardId, ctx.state);
+  const name = (() => {
+    for (const s of ctx.state.sides) {
+      for (const c of s.team) {
+        if (c.cardId === cardId) return c.personName;
+      }
+    }
+    return cardId.slice(0, 6);
+  })();
+  if (side === -1) return name;
+  return side === ctx.meSideIndex ? `You · ${name}` : `Foe · ${name}`;
+}
+
+function moveLabel(ev: { moveId: string; moveName?: string }): string {
+  return ev.moveName ?? ev.moveId.replace(/_/g, " ");
+}
+
+function ownerLabel(playerId: string, ctx: Ctx): string {
+  const idx = ctx.state.sides.findIndex((s) => s.playerId === playerId);
+  if (idx === -1) return playerId.slice(0, 8);
+  return idx === ctx.meSideIndex ? "You" : "Foe";
+}
+
+function renderEvent(event: BattleEvent, state: BattleState, meSideIndex: number): string {
+  const ctx: Ctx = { state, meSideIndex };
   switch (event.kind) {
     case "move-used": {
-      const who = nameFor(event.actorId, state);
-      const target = nameFor(event.targetId, state);
+      const who = labelledName(event.actorId, ctx);
+      const target = labelledName(event.targetId, ctx);
+      const name = moveLabel(event);
       const tags = [
-        event.crit ? "crit!" : null,
-        event.effectiveness > 1 ? "super effective" : null,
-        event.effectiveness < 1 && event.effectiveness > 0 ? "not very effective" : null,
+        event.crit ? "CRIT!" : null,
+        event.effectiveness >= 2 ? "super effective" : null,
+        event.effectiveness > 0 && event.effectiveness < 1 ? "not very effective" : null,
         event.stab ? "STAB" : null,
       ].filter(Boolean);
-      const tagStr = tags.length ? ` (${tags.join(", ")})` : "";
-      return `${who} used ${event.moveId} on ${target} — ${event.damage} dmg${tagStr}`;
+      const tagStr = tags.length ? ` · ${tags.join(", ")}` : "";
+      return `${who} used ${name} on ${target} — ${event.damage} dmg${tagStr}`;
     }
     case "miss":
-      return `${nameFor(event.actorId, state)} missed!`;
-    case "no-effect":
-      return `${nameFor(event.actorId, state)}'s move had no effect.`;
-    case "switch-in":
-      return `${event.playerId} sent in ${nameFor(event.cardId, state)}`;
+      return `${labelledName(event.actorId, ctx)}'s ${moveLabel(event)} missed!`;
+    case "no-effect": {
+      const who = labelledName(event.actorId, ctx);
+      const move = moveLabel(event);
+      switch (event.reason) {
+        case "immune":
+          return `${move} has no effect on that target (immune).`;
+        case "no-pp":
+          return `${who} has no PP left on ${move}!`;
+        case "status-failed":
+          return `${move} failed — target already affected.`;
+        case "no-handler":
+          return `${move} fizzled (effect not yet implemented).`;
+        case "invalid-slot":
+          return `${who} fumbled — invalid move slot.`;
+        default:
+          return `${who}'s ${move} had no effect.`;
+      }
+    }
+    case "switch-in": {
+      const owner = ownerLabel(event.playerId, ctx);
+      return `${owner} sent in ${labelledName(event.cardId, ctx).replace(/^(You|Foe) · /, "")}.`;
+    }
     case "status-inflicted":
-      return `${nameFor(event.actorId, state)} is now ${event.status}.`;
+      return `${labelledName(event.actorId, ctx)} is now ${event.status}!`;
     case "status-tick":
-      return `${nameFor(event.actorId, state)} took ${event.damage} ${event.status} damage.`;
+      return `${labelledName(event.actorId, ctx)} took ${event.damage} ${event.status} damage.`;
     case "cant-move":
-      return `${nameFor(event.actorId, state)} couldn't move (${event.reason}).`;
+      return `${labelledName(event.actorId, ctx)} couldn't move (${event.reason}).`;
     case "hurt-in-confusion":
-      return `${nameFor(event.actorId, state)} hurt itself in confusion — ${event.damage} dmg.`;
+      return `${labelledName(event.actorId, ctx)} hurt itself in confusion — ${event.damage} dmg.`;
     case "faint":
-      return `${nameFor(event.actorId, state)} fainted!`;
-    case "battle-ended":
-      return `Battle ended. Winner: ${event.winnerId}`;
+      return `${labelledName(event.actorId, ctx)} fainted!`;
+    case "battle-ended": {
+      const sideIdx = state.sides.findIndex((s) => s.playerId === event.winnerId);
+      const winner =
+        sideIdx === -1
+          ? event.winnerId.slice(0, 8)
+          : sideIdx === meSideIndex
+            ? "You"
+            : "Foe";
+      return `Battle ended — ${winner} wins.`;
+    }
     default: {
       const _exhaustive: never = event;
       return JSON.stringify(event);

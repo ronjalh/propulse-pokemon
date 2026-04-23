@@ -50,19 +50,45 @@ export type Intent =
   | { kind: "move"; playerId: string; moveIndex: number }
   | { kind: "switch"; playerId: string; switchTo: number };
 
+export type NoEffectReason =
+  /** Defender type is immune to the attacking type. */
+  | "immune"
+  /** Attacker has no PP left on this move slot. */
+  | "no-pp"
+  /** applyStatus returned false — already statused, or volatile clash. */
+  | "status-failed"
+  /** Attacker chose an invalid / out-of-range move slot. */
+  | "invalid-slot"
+  /** Status-category move without a handled effect slug (e.g. future no-op). */
+  | "no-handler";
+
 export type BattleEvent =
   | {
       kind: "move-used";
       actorId: string;
       targetId: string;
       moveId: string;
+      /** Pretty name like "Vision Statement" — prefer in UI over moveId slug. */
+      moveName?: string;
       damage: number;
       crit: boolean;
       effectiveness: number;
       stab: boolean;
     }
-  | { kind: "miss"; actorId: string; moveId: string }
-  | { kind: "no-effect"; actorId: string; moveId: string }
+  | {
+      kind: "miss";
+      actorId: string;
+      moveId: string;
+      moveName?: string;
+    }
+  | {
+      kind: "no-effect";
+      actorId: string;
+      moveId: string;
+      moveName?: string;
+      /** Why the move produced no effect. */
+      reason?: NoEffectReason;
+    }
   | { kind: "switch-in"; playerId: string; cardId: string }
   | {
       kind: "status-inflicted";

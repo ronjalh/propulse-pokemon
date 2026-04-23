@@ -201,8 +201,23 @@ function executeMoveIntent(
   if (!pre.canMove) return;
 
   const slot = attacker.moves[intent.moveIndex];
-  if (!slot || slot.ppLeft <= 0) {
-    events.push({ kind: "no-effect", actorId: attacker.cardId, moveId: slot?.move.id ?? "" });
+  if (!slot) {
+    events.push({
+      kind: "no-effect",
+      actorId: attacker.cardId,
+      moveId: "",
+      reason: "invalid-slot",
+    });
+    return;
+  }
+  if (slot.ppLeft <= 0) {
+    events.push({
+      kind: "no-effect",
+      actorId: attacker.cardId,
+      moveId: slot.move.id,
+      moveName: slot.move.name,
+      reason: "no-pp",
+    });
     return;
   }
   slot.ppLeft -= 1;
@@ -210,7 +225,12 @@ function executeMoveIntent(
 
   // Accuracy check.
   if (!rng.chance(move.accuracy / 100)) {
-    events.push({ kind: "miss", actorId: attacker.cardId, moveId: move.id });
+    events.push({
+      kind: "miss",
+      actorId: attacker.cardId,
+      moveId: move.id,
+      moveName: move.name,
+    });
     return;
   }
 
@@ -221,15 +241,38 @@ function executeMoveIntent(
       if (applied) {
         events.push({ kind: "status-inflicted", actorId: defender.cardId, status: s });
       } else {
-        events.push({ kind: "no-effect", actorId: attacker.cardId, moveId: move.id });
+        events.push({
+          kind: "no-effect",
+          actorId: attacker.cardId,
+          moveId: move.id,
+          moveName: move.name,
+          reason: "status-failed",
+        });
       }
+    } else {
+      // Status move with an effect slug we don't have a handler for yet
+      // (e.g. `raise_atk_self`). Tell the user it fizzled instead of
+      // silently doing nothing.
+      events.push({
+        kind: "no-effect",
+        actorId: attacker.cardId,
+        moveId: move.id,
+        moveName: move.name,
+        reason: "no-handler",
+      });
     }
     return;
   }
 
   const result = computeDamage(attacker, defender, move, rng, slot.isTm ?? false);
   if (result.effectiveness === 0) {
-    events.push({ kind: "no-effect", actorId: attacker.cardId, moveId: move.id });
+    events.push({
+      kind: "no-effect",
+      actorId: attacker.cardId,
+      moveId: move.id,
+      moveName: move.name,
+      reason: "immune",
+    });
     return;
   }
   defender.currentHp = Math.max(0, defender.currentHp - result.damage);
@@ -238,6 +281,7 @@ function executeMoveIntent(
     actorId: attacker.cardId,
     targetId: defender.cardId,
     moveId: move.id,
+    moveName: move.name,
     damage: result.damage,
     crit: result.crit,
     effectiveness: result.effectiveness,
