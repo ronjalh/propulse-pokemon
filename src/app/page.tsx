@@ -1,10 +1,22 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import Image from "next/image";
+import type { LucideIcon } from "lucide-react";
+import {
+  BookOpen,
+  Handshake,
+  History,
+  Layers,
+  Package,
+  Swords,
+  Users,
+} from "lucide-react";
 import { auth } from "@/auth";
 import { signOutAction } from "@/lib/auth/actions";
 import { Button } from "@/components/ui/button";
 import { CreditsBadge } from "@/components/layout/CreditsBadge";
+import { PropulseLogo } from "@/components/icons/PropulseLogo";
+import { TreasureChest } from "@/components/icons/TreasureChest";
 import { db } from "@/lib/db/client";
 import { cards, persons } from "@/lib/db/schema";
 import { getBalance } from "@/lib/economy/credits";
@@ -59,11 +71,14 @@ export default async function HomePage() {
         </div>
       </header>
 
-      <div className="w-full max-w-2xl space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Propulse Pokemon</h1>
-        <p className="text-muted-foreground">
-          Collect the 2026 Fossekall team, battle your friends.
-        </p>
+      <div className="w-full max-w-2xl flex items-center gap-4">
+        <PropulseLogo size={72} />
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">Propulse Pokemon</h1>
+          <p className="text-muted-foreground">
+            Collect the 2026 Fossekall team, battle your friends.
+          </p>
+        </div>
       </div>
 
       <div className="w-full max-w-2xl grid grid-cols-2 gap-4">
@@ -76,14 +91,22 @@ export default async function HomePage() {
       </div>
 
       <nav className="w-full max-w-2xl grid grid-cols-2 gap-3">
-        <NavLink href="/rewards" label="🎁 Daily Rewards" />
-        <NavLink href="/packs" label="Open a pack" />
-        <NavLink href="/collection" label="My Collection" />
-        <NavLink href="/pokedex" label="Pokédex" />
-        <NavLink href="/teams" label="My Teams" />
-        <NavLink href="/battle/new" label="Battle" />
-        <NavLink href="/battle/history" label="Battle History" />
-        <NavLink href="/trade" label="Trade" disabled />
+        <NavLink
+          href="/rewards"
+          label="Daily Rewards"
+          customIcon={<TreasureChest state="closed" size={28} />}
+        />
+        <NavLink href="/packs" label="Open a pack" icon={Package} />
+        <NavLink href="/collection" label="My Collection" icon={Layers} />
+        <NavLink href="/pokedex" label="Pokédex" icon={BookOpen} />
+        <NavLink href="/teams" label="My Teams" icon={Users} />
+        <NavLink href="/battle/new" label="Battle" icon={Swords} />
+        <NavLink
+          href="/battle/history"
+          label="Battle History"
+          icon={History}
+        />
+        <NavLink href="/trade" label="Trade" icon={Handshake} disabled />
       </nav>
     </main>
   );
@@ -112,26 +135,33 @@ function StatCard({
 function NavLink({
   href,
   label,
+  icon: Icon,
+  customIcon,
   disabled,
 }: {
   href: string;
   label: string;
+  icon?: LucideIcon;
+  customIcon?: React.ReactNode;
   disabled?: boolean;
 }) {
+  const iconNode = customIcon ?? (Icon ? <Icon className="size-6" /> : null);
   if (disabled) {
     return (
-      <div className="rounded-lg border p-4 text-center text-muted-foreground cursor-not-allowed">
-        {label}
-        <div className="text-xs mt-1">coming soon</div>
+      <div className="rounded-lg border p-4 text-center text-muted-foreground cursor-not-allowed flex flex-col items-center gap-1.5">
+        <span className="text-muted-foreground/60">{iconNode}</span>
+        <span>{label}</span>
+        <span className="text-xs">coming soon</span>
       </div>
     );
   }
   return (
     <Link
       href={href}
-      className="rounded-lg border p-4 text-center hover:bg-accent transition-colors"
+      className="rounded-lg border p-4 text-center hover:bg-accent transition-colors flex flex-col items-center gap-1.5 font-medium"
     >
-      {label}
+      <span className="text-sky-500">{iconNode}</span>
+      <span>{label}</span>
     </Link>
   );
 }

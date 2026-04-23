@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
-import { Coins, Gift, Lock, Sparkles } from "lucide-react";
+import { Coins, Lock, Sparkles } from "lucide-react";
 
 import { auth } from "@/auth";
-import { Button } from "@/components/ui/button";
 import { CreditsBadge } from "@/components/layout/CreditsBadge";
+import { TreasureChest } from "@/components/icons/TreasureChest";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import {
@@ -53,8 +53,9 @@ export default async function RewardsPage({ searchParams }: PageProps) {
         <CreditsBadge userId={session.user.id} />
       </div>
 
-      <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-        <Gift className="text-amber-500" /> Daily Rewards
+      <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+        <TreasureChest state="closed" size={40} />
+        Daily Rewards
       </h1>
 
       {claimed && kind === "coins" && (
@@ -83,19 +84,23 @@ export default async function RewardsPage({ searchParams }: PageProps) {
         <button
           type="submit"
           disabled={!status.canClaim}
-          className={`mx-auto flex flex-col items-center gap-3 p-8 rounded-2xl border-2 transition-all ${
+          className={`group mx-auto flex flex-col items-center gap-3 p-8 rounded-2xl border-2 transition-all ${
             status.canClaim
               ? "border-amber-500/60 bg-amber-500/10 hover:bg-amber-500/20 hover:scale-105 cursor-pointer"
               : "border-muted-foreground/30 bg-muted/30 cursor-not-allowed opacity-60"
           }`}
         >
-          <div className="text-7xl" aria-hidden>
-            {status.canClaim ? "🎁" : "📦"}
+          <div className="transition-transform group-hover:-translate-y-1">
+            <TreasureChest
+              state={status.canClaim ? "closed" : "closed"}
+              size={140}
+              className={status.canClaim ? "drop-shadow-[0_0_20px_rgba(255,208,80,0.5)]" : ""}
+            />
           </div>
           <div className="text-lg font-bold">
             {status.canClaim
               ? `Open Day ${status.currentDay} chest`
-              : "Already claimed"}
+              : "Already claimed today"}
           </div>
           <div className="text-xs text-muted-foreground">
             {status.canClaim
