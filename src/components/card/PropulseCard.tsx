@@ -24,7 +24,7 @@ type Props = {
 };
 
 const SIZE_CLASSES: Record<Size, string> = {
-  sm: "w-40 h-60 text-xs",
+  sm: "w-48 h-72 text-xs",
   md: "w-60 h-[23rem] text-sm",
   lg: "w-80 h-[31rem] text-base",
 };

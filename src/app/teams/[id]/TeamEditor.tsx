@@ -314,7 +314,7 @@ function CardSlot(props: {
 function EmptySlotPlaceholder({ index }: { index: number }) {
   return (
     <div
-      className="w-40 h-60 rounded-2xl border-2 border-dashed border-muted-foreground/30 bg-muted/20 flex flex-col items-center justify-center text-center px-3"
+      className="w-48 h-72 rounded-2xl border-2 border-dashed border-muted-foreground/30 bg-muted/20 flex flex-col items-center justify-center text-center px-3"
       aria-label={`Empty slot ${index + 1}`}
     >
       <div className="text-4xl opacity-30 font-mono">#{index + 1}</div>
