@@ -92,6 +92,20 @@ export function TeamEditor(props: Props) {
     });
   }
 
+  function autofillMoves() {
+    setMoveSets((prev) => {
+      const next: TeamMoveSets = { ...prev };
+      for (const cardId of cardIds) {
+        if (!cardId) continue;
+        const pool = props.eligibleByCard[cardId] ?? [];
+        if (pool.length === 0) continue;
+        const shuffled = [...pool].sort(() => Math.random() - 0.5);
+        next[cardId] = shuffled.slice(0, MOVES_PER_CARD).map((m) => m.id);
+      }
+      return next;
+    });
+  }
+
   async function save() {
     setSaveState({ kind: "saving" });
     startTransition(async () => {
@@ -126,6 +140,14 @@ export function TeamEditor(props: Props) {
           placeholder="Team name"
           aria-label="Team name"
         />
+        <Button
+          onClick={autofillMoves}
+          variant="outline"
+          disabled={!cardIds.some(Boolean)}
+          title="Randomly pick 4 moves for every filled card slot"
+        >
+          🎲 Autofill moves
+        </Button>
         <Button onClick={save} disabled={!complete || saveState.kind === "saving"}>
           {saveState.kind === "saving"
             ? "Saving…"
