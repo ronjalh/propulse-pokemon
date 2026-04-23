@@ -71,7 +71,12 @@ export function BattleScreen({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [menu, setMenu] = useState<"moves" | "switch">("moves");
-  const [intentSent, setIntentSent] = useState(false);
+  /** The turn number we've already submitted an intent for. Derived banner-
+   *  state: submittedTurn === state.turn → waiting; otherwise → your-turn.
+   *  Setting this BEFORE the fetch (not after) closes a race where a fast
+   *  server resolution pushed state.turn forward before the fetch returned,
+   *  leaving the banner stuck on "WAITING". */
+  const [submittedTurn, setSubmittedTurn] = useState<number | null>(null);
   const logSeq = useRef(0);
   /** Track which turn numbers we've already shown events for so Pusher and
    *  polling don't both log the same turn. */
@@ -156,7 +161,6 @@ export function BattleScreen({
         setDeadlineMs((prev) =>
           slim.deadlineMs && slim.deadlineMs > 0 ? slim.deadlineMs : prev,
         );
-        if (slim.turn > state.turn) setIntentSent(false);
       } catch {
         /* ignore poll errors */
       }
@@ -172,7 +176,7 @@ export function BattleScreen({
   useBattleChannel(battleId, (event: BattleEventPayload) => {
     switch (event.kind) {
       case "turn-start":
-        setIntentSent(false);
+        // submittedTurn-based derivation handles the banner automatically.
         setDeadlineMs(event.deadlineMs);
         pushLog(`Turn ${event.turn} — choose an action.`);
         break;
@@ -202,9 +206,27 @@ export function BattleScreen({
   });
 
   async function submitIntent(intent: Intent) {
-    if (intentSent) return;
+    if (submittedTurn === state.turn) return;
+    // Lock the banner to WAITING immediately for THIS turn — if state.turn
+    // advances while the fetch is in flight (fast mirror AI etc.), the banner
+    // flips back to YOUR TURN automatically since submittedTurn !== state.turn.
+    const lockedTurn = state.turn;
+    setSubmittedTurn(lockedTurn);
     setSubmitting(true);
     setError(null);
+    // Pretty-log what the player picked so they can sanity-check.
+    const myActive = state.sides[meSideIndex].team[state.sides[meSideIndex].activeIndex];
+    if (intent.kind === "move") {
+      const slot = myActive.moves[intent.moveIndex];
+      pushLog(
+        `You chose: ${myActive.personName} · ${slot?.move.name ?? "move"} — waiting for opponent…`,
+      );
+    } else {
+      const target = state.sides[meSideIndex].team[intent.switchTo];
+      pushLog(
+        `You chose: switch to ${target?.personName ?? "…"} — waiting for opponent…`,
+      );
+    }
     try {
       const res = await fetch(`/api/battle/${battleId}/intent`, {
         method: "POST",
@@ -214,29 +236,19 @@ export function BattleScreen({
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(body.error ?? `HTTP ${res.status}`);
-      } else {
-        setIntentSent(true);
-        // Pretty-log what the player picked so they can sanity-check before
-        // the turn resolves.
-        const myActive = state.sides[meSideIndex].team[state.sides[meSideIndex].activeIndex];
-        if (intent.kind === "move") {
-          const slot = myActive.moves[intent.moveIndex];
-          pushLog(
-            `You chose: ${myActive.personName} · ${slot?.move.name ?? "move"} — waiting for opponent…`,
-          );
-        } else {
-          const target = state.sides[meSideIndex].team[intent.switchTo];
-          pushLog(
-            `You chose: switch to ${target?.personName ?? "…"} — waiting for opponent…`,
-          );
-        }
+        // Release the lock so they can retry.
+        setSubmittedTurn((prev) => (prev === lockedTurn ? null : prev));
       }
     } catch (e) {
       setError(String(e));
+      setSubmittedTurn((prev) => (prev === lockedTurn ? null : prev));
     } finally {
       setSubmitting(false);
     }
   }
+
+  // Derived banner state.
+  const intentSent = submittedTurn === state.turn;
 
   const mySide = state.sides[meSideIndex];
   const oppSide = state.sides[1 - meSideIndex];
@@ -250,13 +262,6 @@ export function BattleScreen({
   useEffect(() => {
     if (mustSwitch && menu !== "switch") setMenu("switch");
   }, [mustSwitch, menu]);
-
-  // Reset intentSent whenever the turn number advances, no matter whether
-  // that came through Pusher or polling. Prevents the "WAITING FOR OPPONENT"
-  // banner from getting stuck after state already moved on.
-  useEffect(() => {
-    setIntentSent(false);
-  }, [state.turn]);
 
   return (
     <div className="space-y-4">
