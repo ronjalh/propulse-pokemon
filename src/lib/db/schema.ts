@@ -30,6 +30,8 @@ export const users = pgTable("users", {
   credits: integer("credits").notNull().default(200),
   isAdmin: boolean("is_admin").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  lastDailyRewardAt: timestamp("last_daily_reward_at", { withTimezone: true }),
+  dailyStreakDay: integer("daily_streak_day").notNull().default(0),
 });
 
 export const accounts = pgTable(

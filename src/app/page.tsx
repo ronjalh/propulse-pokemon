@@ -76,6 +76,7 @@ export default async function HomePage() {
       </div>
 
       <nav className="w-full max-w-2xl grid grid-cols-2 gap-3">
+        <NavLink href="/rewards" label="🎁 Daily Rewards" />
         <NavLink href="/packs" label="Open a pack" />
         <NavLink href="/collection" label="My Collection" />
         <NavLink href="/pokedex" label="Pokédex" />

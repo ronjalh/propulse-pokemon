@@ -57,6 +57,13 @@
       "when": 1776932195670,
       "tag": "0007_acoustic_slipstream",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1776934882724,
+      "tag": "0008_cheerful_black_bird",
+      "breakpoints": true
     }
   ]
 }
