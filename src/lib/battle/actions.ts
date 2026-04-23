@@ -1,11 +1,12 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db/client";
-import { users } from "@/lib/db/schema";
+import { battles, users } from "@/lib/db/schema";
 import { hashSeed } from "./rng";
 import { hydrateSide, hydrateSingleCard } from "./hydrate";
 import {
@@ -114,6 +115,56 @@ export async function joinBattleAction(formData: FormData): Promise<never> {
   if (!result.ok) redirect(`/battle/${battleId}?error=${result.reason}`);
 
   redirect(`/battle/${battleId}`);
+}
+
+/**
+ * Remove a battle from history. Participant-gated. Also clears any lingering
+ * Redis state + intent keys so a stuck in-progress battle is fully cleaned up.
+ */
+export async function deleteBattleAction(formData: FormData): Promise<never> {
+  const session = await auth();
+  if (!session?.user) redirect("/signin");
+  const userId = session.user.id;
+  const battleId = String(formData.get("battleId") ?? "");
+  if (!battleId) redirect("/battle/history");
+
+  // Only delete if this user is a participant.
+  await db
+    .delete(battles)
+    .where(
+      and(
+        eq(battles.id, battleId),
+        or(eq(battles.p1Id, userId), eq(battles.p2Id, userId)),
+      ),
+    );
+
+  // Best-effort Redis cleanup; if Redis isn't configured, silently skip.
+  if (isRedisConfigured()) {
+    try {
+      const { Redis } = await import("@upstash/redis");
+      const redis = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL!,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+      });
+      await redis.del(`battle:${battleId}`);
+      // Drop any intent keys — iterate possible shape `battle:<id>:intent:*`
+      // via SCAN so we don't depend on exact turn numbers.
+      let cursor = 0;
+      do {
+        const [next, keys] = await redis.scan(cursor, {
+          match: `battle:${battleId}:intent:*`,
+          count: 100,
+        });
+        cursor = Number(next);
+        if ((keys as string[]).length) await redis.del(...(keys as string[]));
+      } while (cursor !== 0);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  revalidatePath("/battle/history");
+  redirect("/battle/history");
 }
 
 /** Panic button: end a battle you're stuck in. Abandoner forfeits. */

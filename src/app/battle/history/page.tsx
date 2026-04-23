@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Trash2 } from "lucide-react";
 
 import { auth } from "@/auth";
 import { CreditsBadge } from "@/components/layout/CreditsBadge";
+import { deleteBattleAction } from "@/lib/battle/actions";
 import { battleHistoryForUser } from "@/lib/battle/history-queries";
 
 export default async function BattleHistoryPage() {
@@ -74,10 +76,21 @@ export default async function BattleHistoryPage() {
                 </div>
                 <Link
                   href={`/battle/${row.id}/replay`}
-                  className="text-sm underline"
+                  className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
                 >
                   Replay →
                 </Link>
+                <form action={deleteBattleAction}>
+                  <input type="hidden" name="battleId" value={row.id} />
+                  <button
+                    type="submit"
+                    aria-label="Delete battle"
+                    title="Delete this battle"
+                    className="p-2 rounded-md text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </form>
               </li>
             );
           })}
