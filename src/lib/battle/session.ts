@@ -7,7 +7,7 @@ import {
   persistBattleEnd,
   persistTurn,
 } from "./persist";
-import type { BattleState, Intent } from "./types";
+import type { BattleSide, BattleState, Intent } from "./types";
 import { publishBattleEvent } from "@/lib/realtime/server";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -259,6 +259,15 @@ export async function submitIntent(
   const key = intentKey(battleId, state.turn, userId);
   await redis().set(key, intent, { ex: 5 * 60 });
 
+  // Solo-test (mirror) battles: auto-submit a random intent for the mirror side
+  // so there's actually someone to fight. Detected by the `mirror:` playerId prefix.
+  const mirrorSide = state.sides.find((s) => s.playerId.startsWith("mirror:"));
+  if (mirrorSide) {
+    const mirrorIntent = pickRandomAiIntent(mirrorSide);
+    const mirrorKey = intentKey(battleId, state.turn, mirrorSide.playerId);
+    await redis().set(mirrorKey, mirrorIntent, { ex: 5 * 60 });
+  }
+
   // Do we have both players' intents now?
   const keys = state.sides.map((s) => intentKey(battleId, state.turn, s.playerId));
   const [a, b] = await redis().mget<Intent[]>(...keys);
@@ -363,3 +372,33 @@ export async function enforceTurnTimeout(battleId: string): Promise<
 
 // Re-export for callers that want to compose their own flow.
 export { checkWinCondition };
+
+// ── Mirror-battle AI ────────────────────────────────────────────────────────
+//
+// Dumb random picker for the "solo test vs mirror" dev-aid mode. Picks a
+// move with remaining PP on the active card; falls back to switching to a
+// living card if the active one is out of PP; final fallback is move 0.
+function pickRandomAiIntent(side: BattleSide): Intent {
+  const active = side.team[side.activeIndex];
+  if (active && active.currentHp > 0) {
+    const viable = active.moves
+      .map((slot, i) => ({ slot, i }))
+      .filter((x) => x.slot.ppLeft > 0);
+    if (viable.length > 0) {
+      const pick = viable[Math.floor(Math.random() * viable.length)];
+      return { kind: "move", playerId: side.playerId, moveIndex: pick.i };
+    }
+  }
+  const livingIdx = side.team
+    .map((c, i) => ({ c, i }))
+    .filter((x) => x.c.currentHp > 0 && x.i !== side.activeIndex)
+    .map((x) => x.i);
+  if (livingIdx.length > 0) {
+    return {
+      kind: "switch",
+      playerId: side.playerId,
+      switchTo: livingIdx[Math.floor(Math.random() * livingIdx.length)],
+    };
+  }
+  return { kind: "move", playerId: side.playerId, moveIndex: 0 };
+}
