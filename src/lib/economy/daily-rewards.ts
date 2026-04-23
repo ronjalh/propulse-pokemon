@@ -23,14 +23,35 @@ export type DailyReward =
   | { day: number; kind: "card" };
 
 export const DAILY_REWARDS: DailyReward[] = [
-  { day: 1, kind: "coins", amount: 50 },
-  { day: 2, kind: "coins", amount: 60 },
-  { day: 3, kind: "coins", amount: 70 },
-  { day: 4, kind: "coins", amount: 80 },
-  { day: 5, kind: "coins", amount: 90 },
-  { day: 6, kind: "coins", amount: 100 },
+  { day: 1, kind: "coins", amount: 20 },
+  { day: 2, kind: "coins", amount: 25 },
+  { day: 3, kind: "coins", amount: 30 },
+  { day: 4, kind: "coins", amount: 40 },
+  { day: 5, kind: "coins", amount: 50 },
+  { day: 6, kind: "coins", amount: 60 },
   { day: 7, kind: "card" },
 ];
+
+/**
+ * Rarity weights applied to the Day 7 card draw. Keeps legendaries exciting
+ * rather than handing one out every seven logins.
+ */
+const DAY7_RARITY_WEIGHTS = [
+  { rarity: "common" as const, weight: 70 },
+  { rarity: "rare" as const, weight: 25 },
+  { rarity: "epic" as const, weight: 4 },
+  { rarity: "legendary" as const, weight: 1 },
+];
+
+function rollRarity(): "common" | "rare" | "epic" | "legendary" {
+  const total = DAY7_RARITY_WEIGHTS.reduce((s, w) => s + w.weight, 0);
+  let r = Math.random() * total;
+  for (const w of DAY7_RARITY_WEIGHTS) {
+    r -= w.weight;
+    if (r <= 0) return w.rarity;
+  }
+  return "common";
+}
 
 const HOURS = (n: number) => n * 60 * 60 * 1000;
 const CLAIM_COOLDOWN_MS = HOURS(20);
@@ -103,10 +124,12 @@ export async function claimDailyReward(userId: string): Promise<ClaimResult> {
       reason: `daily-reward:day-${status.currentDay}`,
     });
   } else {
-    // Grant a random Propulse card.
+    // Day 7 card — rarity-weighted (70/25/4/1) so legendaries stay special.
+    const targetRarity = rollRarity();
     const allPersons = await db.select().from(persons);
-    const person =
-      allPersons[Math.floor(Math.random() * allPersons.length)];
+    const pool = allPersons.filter((p) => p.rarity === targetRarity);
+    const source = pool.length > 0 ? pool : allPersons;
+    const person = source[Math.floor(Math.random() * source.length)];
     const cardId = crypto.randomUUID();
     await db.insert(cards).values({
       id: cardId,
@@ -120,7 +143,7 @@ export async function claimDailyReward(userId: string): Promise<ClaimResult> {
       userId,
       kind: "card_acquire",
       cardId,
-      reason: `daily-reward:day-7`,
+      reason: `daily-reward:day-7:${targetRarity}`,
     });
     newCardId = cardId;
     personName = person.name;

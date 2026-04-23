@@ -25,12 +25,12 @@ export const PACKS: Record<PackType, PackConfig> = {
   base: {
     type: "base",
     displayName: "Base Pack",
-    description: "Standard 5-card pull with at least one Rare+.",
+    description: "Standard 5-card pull — pure luck, no guarantee.",
     costCredits: 100,
     cardCount: 5,
     shinyDenominator: 64,
     weights: { common: 70, rare: 25, epic: 4, legendary: 1 },
-    guaranteeRarePlus: true,
+    guaranteeRarePlus: false,
   },
   premium: {
     type: "premium",
