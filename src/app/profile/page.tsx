@@ -109,9 +109,9 @@ export default async function ProfilePage() {
               Account
             </div>
             <div className="font-medium">{session.user.name ?? email}</div>
-            <div className="text-xs text-muted-foreground">{email}</div>
+            <div className="text-sm text-muted-foreground">{email}</div>
             {propulsePerson && (
-              <div className="text-xs text-muted-foreground mt-1">
+              <div className="text-sm text-muted-foreground mt-1">
                 {propulsePerson.title} · {propulsePerson.discipline}
                 {propulsePerson.subDiscipline
                   ? ` · ${propulsePerson.subDiscipline}`
@@ -179,7 +179,7 @@ function StatBox({
         {label}
       </div>
       <div className="text-xl font-bold mt-1 tabular-nums">{value}</div>
-      {hint && <div className="text-xs text-muted-foreground mt-0.5">{hint}</div>}
+      {hint && <div className="text-sm text-muted-foreground mt-0.5">{hint}</div>}
     </div>
   );
 }

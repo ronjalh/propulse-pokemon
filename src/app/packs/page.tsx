@@ -39,19 +39,19 @@ export default async function PacksPage({ searchParams }: PageProps) {
             <form
               key={p.type}
               action={openPackAction}
-              className="rounded-lg border p-4 flex items-center gap-4"
+              className="rounded-lg border p-5 flex items-center gap-4"
             >
               <input type="hidden" name="packType" value={p.type} />
-              <div className="flex-1">
-                <div className="font-semibold">{p.displayName}</div>
-                <div className="text-sm text-muted-foreground">
+              <div className="flex-1 space-y-1.5">
+                <div className="text-lg font-semibold">{p.displayName}</div>
+                <div className="text-base text-muted-foreground">
                   {p.description}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">
+                <div className="text-sm text-muted-foreground">
                   {p.cardCount} cards · shiny rate 1/{p.shinyDenominator}
                 </div>
               </div>
-              <Button type="submit" disabled={!canAfford}>
+              <Button type="submit" disabled={!canAfford} size="lg">
                 {p.costCredits} credits
               </Button>
             </form>

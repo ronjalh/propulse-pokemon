@@ -13,8 +13,6 @@ import {
   Users,
 } from "lucide-react";
 import { auth } from "@/auth";
-import { signOutAction } from "@/lib/auth/actions";
-import { Button } from "@/components/ui/button";
 import { CreditsBadge } from "@/components/layout/CreditsBadge";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { PropulseLogo } from "@/components/icons/PropulseLogo";
@@ -76,7 +74,7 @@ export default async function HomePage() {
             <div className="font-semibold leading-tight">
               {session.user.name ?? session.user.email}
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               {session.user.email}
             </div>
           </div>
@@ -84,11 +82,6 @@ export default async function HomePage() {
         <div className="flex items-center gap-2">
           <CreditsBadge userId={userId} />
           <ThemeToggle />
-          <form action={signOutAction}>
-            <Button type="submit" variant="ghost" size="sm">
-              Sign out
-            </Button>
-          </form>
         </div>
       </header>
 
@@ -156,7 +149,7 @@ function StatCard({
         {label}
       </div>
       <div className="text-2xl font-bold mt-1 tabular-nums">{value}</div>
-      {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
+      {hint && <div className="text-sm text-muted-foreground mt-1">{hint}</div>}
     </div>
   );
 }
