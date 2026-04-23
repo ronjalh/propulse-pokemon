@@ -39,8 +39,11 @@ export default async function BattleHistoryPage() {
             const opponentEmail = iAmP1 ? row.p2Email : row.p1Email;
             const opponentLabel =
               opponentEmail ?? (iAmP1 ? "mirror/pending" : "(unknown)");
+            // `endedAt` is the authoritative "is this battle over" signal.
+            // `winnerId` can be null even for a finished battle (mirror /
+            // pending opponent won — FK-unconstrained pseudo-id stripped to null).
             const outcome =
-              row.winnerId == null
+              row.endedAt == null
                 ? "ongoing"
                 : row.winnerId === userId
                   ? "win"

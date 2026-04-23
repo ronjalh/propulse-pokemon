@@ -55,11 +55,20 @@ export async function persistBattleEnd(
   battleId: string,
   finalState: BattleState,
 ): Promise<void> {
+  // `winnerId` is an FK to users.id — strip pseudo-player-ids like
+  // `mirror:<id>` or `pending:<email>` to null so the update doesn't
+  // violate the constraint (which would leave the row stuck "in progress").
+  const realWinner =
+    finalState.winnerId &&
+    !finalState.winnerId.startsWith("mirror:") &&
+    !finalState.winnerId.startsWith("pending:")
+      ? finalState.winnerId
+      : null;
   await db
     .update(battles)
     .set({
       endedAt: new Date(),
-      winnerId: finalState.winnerId,
+      winnerId: realWinner,
       finalState,
     })
     .where(sql`${battles.id} = ${battleId}`);
