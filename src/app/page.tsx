@@ -10,6 +10,7 @@ import {
   Package,
   ShieldAlert,
   Swords,
+  Trophy,
   Users,
 } from "lucide-react";
 import { auth } from "@/auth";
@@ -120,6 +121,7 @@ export default async function HomePage() {
         <NavLink href="/pokedex" label="Pokédex" icon={BookOpen} />
         <NavLink href="/teams" label="My Teams" icon={Users} />
         <NavLink href="/battle/new" label="Battle" icon={Swords} />
+        <NavLink href="/leaderboard" label="Leaderboard" icon={Trophy} />
         <NavLink
           href="/battle/history"
           label="Battle History"
