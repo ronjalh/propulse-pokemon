@@ -20,8 +20,6 @@ export type SlimCard = {
   sleepTurnsLeft: number;
   /** PP remaining for each of this card's move slots, in order. */
   ppLeft: number[];
-  /** Energy banked. Spent on moves; +1 each end-of-turn for the active card. */
-  currentEnergy: number;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

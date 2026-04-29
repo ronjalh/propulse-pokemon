@@ -119,7 +119,6 @@ export async function hydrateSide(
       moves: moveSlots,
       status: null,
       volatile: { confusionTurnsLeft: 0, sleepTurnsLeft: 0 },
-      currentEnergy: 0,
     });
   }
 
@@ -208,7 +207,6 @@ export async function hydrateSingleCard(
     moves: moveSlots,
     status: null,
     volatile: { confusionTurnsLeft: 0, sleepTurnsLeft: 0 },
-    currentEnergy: 0,
   };
 
   return { playerId: userId, team: [battleCard], activeIndex: 0 };

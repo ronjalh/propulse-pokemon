@@ -36,7 +36,6 @@ import { Button } from "@/components/ui/button";
 import { PropulseCard } from "@/components/card/PropulseCard";
 import { abandonBattleAction } from "@/lib/battle/actions";
 import type { CardMeta } from "@/lib/battle/card-meta";
-import { MAX_ENERGY, costForMove } from "@/lib/battle/engine";
 import type { BattleCard, BattleEvent, BattleSide, BattleState, Intent, MoveSlot } from "@/lib/battle/types";
 import { useBattleChannel } from "@/lib/realtime/client";
 import type { BattleEventPayload, SlimTurnDelta } from "@/lib/realtime/events";
@@ -69,7 +68,6 @@ function applyDelta(state: BattleState, delta: SlimTurnDelta): BattleState {
         ...c,
         currentHp: slimCard.currentHp,
         status: slimCard.status as BattleCard["status"],
-        currentEnergy: slimCard.currentEnergy,
         volatile: {
           confusionTurnsLeft: slimCard.confusionTurnsLeft,
           sleepTurnsLeft: slimCard.sleepTurnsLeft,
@@ -456,19 +454,12 @@ export function BattleScreen({
           {menu === "moves" ? (
             <div className="grid grid-cols-2 gap-2">
               {me.moves.map((slot, i) => {
-                const cost = costForMove(slot.move);
-                const have = me.currentEnergy ?? 0;
-                const enoughEnergy = have >= cost;
                 return (
                   <div key={i} className="relative">
                     <Button
                       variant="outline"
                       disabled={
-                        submitting ||
-                        intentSent ||
-                        slot.ppLeft <= 0 ||
-                        me.currentHp <= 0 ||
-                        !enoughEnergy
+                        submitting || intentSent || slot.ppLeft <= 0 || me.currentHp <= 0
                       }
                       onClick={() =>
                         submitIntent({
@@ -480,21 +471,7 @@ export function BattleScreen({
                       className="w-full justify-between h-auto py-2 text-left pr-10"
                     >
                       <div className="min-w-0">
-                        <div className="font-medium flex items-center gap-1.5">
-                          <span>{slot.move.name}</span>
-                          {cost > 0 && (
-                            <span
-                              className={`text-xs tracking-tight ${
-                                enoughEnergy
-                                  ? "text-amber-500"
-                                  : "text-muted-foreground/50"
-                              }`}
-                              title={`Costs ${cost} energy`}
-                            >
-                              {"⚡".repeat(cost)}
-                            </span>
-                          )}
-                        </div>
+                        <div className="font-medium">{slot.move.name}</div>
                         <div className="text-xs text-muted-foreground">
                           {slot.move.type} · {slot.move.category}
                           {slot.move.power ? ` · ${slot.move.power}BP` : ""}
@@ -817,45 +794,9 @@ function CardPanel({
         <div className="text-xs tabular-nums">
           {card.currentHp} / {card.maxHp} HP
         </div>
-        <EnergyMeter energy={card.currentEnergy ?? 0} side={side} />
         <TeamRoster side={side} battleSide={battleSide} />
       </div>
       </div>
-    </div>
-  );
-}
-
-/** Energy banked on the active card. Spent to play powerful moves; +1 each
- *  end-of-turn. Capped at MAX_ENERGY. */
-function EnergyMeter({
-  energy,
-  side,
-}: {
-  energy: number;
-  side: "opponent" | "me";
-}) {
-  const filled = Math.max(0, Math.min(MAX_ENERGY, energy));
-  return (
-    <div
-      className={`flex items-center gap-1 ${
-        side === "opponent" ? "justify-end" : ""
-      }`}
-      aria-label={`${filled} of ${MAX_ENERGY} energy`}
-      title={`Energy: ${filled}/${MAX_ENERGY}`}
-    >
-      {Array.from({ length: MAX_ENERGY }).map((_, i) => (
-        <div
-          key={i}
-          className={`size-2.5 rounded-sm border ${
-            i < filled
-              ? "bg-amber-400 border-amber-500 shadow-[0_0_4px_rgba(251,191,36,0.6)]"
-              : "bg-muted/30 border-muted-foreground/30"
-          }`}
-        />
-      ))}
-      <span className="text-[10px] tabular-nums text-muted-foreground ml-1">
-        {filled}/{MAX_ENERGY}
-      </span>
     </div>
   );
 }

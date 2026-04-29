@@ -30,9 +30,6 @@ export type BattleCard = {
     confusionTurnsLeft: number;
     sleepTurnsLeft: number;
   };
-  /** Energy this card has banked. Spent on moves. Active card gains +1 each
-   *  end-of-turn; switched-in cards keep what they had. */
-  currentEnergy?: number;
 };
 
 export type BattleSide = {
@@ -63,9 +60,7 @@ export type NoEffectReason =
   /** Attacker chose an invalid / out-of-range move slot. */
   | "invalid-slot"
   /** Status-category move without a handled effect slug (e.g. future no-op). */
-  | "no-handler"
-  /** Attacker doesn't have enough energy to use this move. */
-  | "no-energy";
+  | "no-handler";
 
 export type BattleEvent =
   | {
