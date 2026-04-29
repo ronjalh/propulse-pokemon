@@ -78,7 +78,6 @@ export default async function NewBattlePage({ searchParams }: PageProps) {
               className="mt-1 w-full rounded border bg-background p-2 text-sm"
             />
           </label>
-          <WagerFields ownedCards={[]} creditsOnly />
           <Button type="submit">Send 1v1 challenge</Button>
         </form>
       )}
@@ -154,9 +153,6 @@ export default async function NewBattlePage({ searchParams }: PageProps) {
                 className="mt-1 w-full rounded border bg-background p-2 text-sm"
               />
             </label>
-
-            <WagerFields ownedCards={ownedCards} />
-
             <Button type="submit">Send challenge</Button>
           </form>
 
@@ -201,71 +197,5 @@ function friendlyError(code: string): string {
       "Battles need Upstash Redis set up. Create a free database at upstash.com → copy REST URL + token → add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN to .env.local, then restart the dev server. Pusher keys are also needed for live updates."
     );
   }
-  if (code === "insufficient-wager") return "You don't have enough credits for that wager.";
-  if (code === "wager-not-owned") return "That wager card isn't yours.";
-  if (code === "wager-not-in-team") return "The wager card must be in your selected team.";
   return `Error: ${code}`;
-}
-
-function WagerFields({
-  ownedCards,
-  creditsOnly = false,
-}: {
-  ownedCards: Awaited<ReturnType<typeof ownedCardsForUser>>;
-  creditsOnly?: boolean;
-}) {
-  return (
-    <details className="rounded border bg-muted/30 p-3">
-      <summary className="text-sm font-medium cursor-pointer select-none">
-        💰 Add stakes (optional)
-      </summary>
-      <p className="pt-2 text-xs text-muted-foreground">
-        Pick either or both. Loser forfeits what they put up, winner takes everything.
-      </p>
-
-      <div className="mt-3 rounded border p-3 bg-background/40 space-y-2">
-        <div className="text-xs font-semibold text-sky-600">💵 Credit wager</div>
-        <label className="block text-xs">
-          How much each side puts in (0 = no credit stakes)
-          <input
-            name="wagerCredits"
-            type="number"
-            min={0}
-            step={10}
-            defaultValue={0}
-            className="mt-1 w-full rounded border bg-background p-2 text-sm"
-          />
-        </label>
-      </div>
-
-      {!creditsOnly ? (
-        <div className="mt-2 rounded border p-3 bg-background/40 space-y-2">
-          <div className="text-xs font-semibold text-pink-600">🃏 Card wager</div>
-          <label className="block text-xs">
-            Pick one of your cards (— none — = no card stakes)
-            <select
-              name="wagerCardId"
-              defaultValue=""
-              className="mt-1 w-full rounded border bg-background p-2 text-sm"
-            >
-              <option value="">— none —</option>
-              {ownedCards.map((c) => (
-                <option key={c.cardId} value={c.cardId}>
-                  {c.personName}
-                  {c.isShiny ? " ✨" : ""} ({c.primaryType}
-                  {c.secondaryType ? `/${c.secondaryType}` : ""})
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      ) : (
-        <p className="mt-2 text-xs text-muted-foreground">
-          In 1v1, the card you&rsquo;re playing with is automatically the
-          card wager — loser forfeits it. If you just want a friendly match,
-          leave the credit wager at 0.
-        </p>
-      )}
-    </details>
-  );
 }

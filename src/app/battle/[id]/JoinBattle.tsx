@@ -3,22 +3,14 @@ import { joinBattleAction } from "@/lib/battle/actions";
 import type { Team } from "@/lib/db/schema";
 import type { OwnedCard } from "@/lib/teams/queries";
 
-type WagerInfo = {
-  credits: number;
-  p1CardId: string | null;
-  p2CardId: string | null;
-  settled: boolean;
-};
-
 type Props = {
   battleId: string;
   mode: "team" | "card";
   teams: Team[];
   cards: OwnedCard[];
-  wager?: WagerInfo | null;
 };
 
-export function JoinBattle({ battleId, mode, teams, cards, wager }: Props) {
+export function JoinBattle({ battleId, mode, teams, cards }: Props) {
   if (mode === "team") {
     if (teams.length === 0) {
       return (
@@ -48,33 +40,7 @@ export function JoinBattle({ battleId, mode, teams, cards, wager }: Props) {
             ))}
           </select>
         </label>
-        {wager?.p1CardId && (
-          <label className="block text-sm">
-            Your wager card (one of your 6 — loser forfeits it)
-            <select
-              name="wagerCardId"
-              required
-              defaultValue=""
-              className="mt-1 w-full rounded border bg-background p-2 text-sm"
-            >
-              <option value="" disabled>
-                — pick one of your cards —
-              </option>
-              {cards.map((c) => (
-                <option key={c.cardId} value={c.cardId}>
-                  {c.personName}
-                  {c.isShiny ? " ✨" : ""} ({c.primaryType}
-                  {c.secondaryType ? `/${c.secondaryType}` : ""})
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <Button type="submit">
-          {wager && wager.credits > 0
-            ? `Accept (match ${wager.credits} credits)`
-            : "Accept challenge"}
-        </Button>
+        <Button type="submit">Accept challenge</Button>
       </form>
     );
   }
@@ -110,11 +76,7 @@ export function JoinBattle({ battleId, mode, teams, cards, wager }: Props) {
           ))}
         </select>
       </label>
-      <Button type="submit">
-        {wager && wager.credits > 0
-          ? `Accept 1v1 (match ${wager.credits} credits)`
-          : "Accept 1v1"}
-      </Button>
+      <Button type="submit">Accept 1v1</Button>
     </form>
   );
 }

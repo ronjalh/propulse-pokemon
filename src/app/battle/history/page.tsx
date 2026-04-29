@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Coins, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 import { auth } from "@/auth";
 import { CreditsBadge } from "@/components/layout/CreditsBadge";
 import { deleteBattleAction } from "@/lib/battle/actions";
 import { battleHistoryForUser } from "@/lib/battle/history-queries";
-import type { BattleWager } from "@/lib/db/schema";
 
 export default async function BattleHistoryPage() {
   const session = await auth();
@@ -72,12 +71,6 @@ export default async function BattleHistoryPage() {
                     <span className="text-muted-foreground font-normal">
                       vs {opponentLabel}
                     </span>
-                    {row.wager && (row.wager as BattleWager).credits > 0 && (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-700 border border-amber-500/40">
-                        <Coins className="size-3" />
-                        {(row.wager as BattleWager).credits * 2}
-                      </span>
-                    )}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     {new Date(row.createdAt).toLocaleString()} · {row.turnsPlayed} turn

@@ -7,9 +7,12 @@ import {
   type BattleWager,
   type TurnLogEntry,
 } from "@/lib/db/schema";
-import { logCardEvent } from "@/lib/economy/credits";
+import { earn, logCardEvent } from "@/lib/economy/credits";
 import { settleWager } from "./wager";
 import type { BattleEvent, BattleState } from "./types";
+
+/** Flat credit reward for winning a real PvP match. */
+export const PVP_WIN_REWARD = 5;
 
 type PersistOnCreateArgs = {
   battleId: string;
@@ -86,6 +89,14 @@ export async function persistBattleEnd(
     !finalState.winnerId.startsWith("pending:")
       ? finalState.winnerId
       : null;
+
+  // Read prior phase so the PvP reward is awarded only ONCE per battle.
+  const [prior] = await db
+    .select({ p1Id: battles.p1Id, p2Id: battles.p2Id, phase: battles.phase })
+    .from(battles)
+    .where(sql`${battles.id} = ${battleId}`)
+    .limit(1);
+
   await db
     .update(battles)
     .set({
@@ -96,6 +107,26 @@ export async function persistBattleEnd(
     })
     .where(sql`${battles.id} = ${battleId}`);
 
-  // Settle any wager (credit payout + wager-card transfer). Idempotent.
+  // Settle any legacy wager (credit payout + wager-card transfer). Idempotent.
+  // Wager UI is gone but old battles in the DB may still carry one.
   await settleWager(battleId, finalState.winnerId);
+
+  // PvP win reward — only on the first transition to ended, only when both
+  // sides are real users (no mirror), only when there's a real winner.
+  if (
+    prior &&
+    prior.phase !== "ended" &&
+    realWinner &&
+    prior.p1Id &&
+    prior.p2Id &&
+    !prior.p1Id.startsWith("mirror:") &&
+    !prior.p2Id.startsWith("mirror:")
+  ) {
+    await earn({
+      userId: realWinner,
+      amount: PVP_WIN_REWARD,
+      reason: `pvp-win:${battleId}`,
+      relatedBattleId: battleId,
+    });
+  }
 }

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Coins, Swords } from "lucide-react";
+import { Swords } from "lucide-react";
 
 import { pendingChallengesFor } from "@/lib/battle/challenges";
 
@@ -40,15 +40,6 @@ export async function PendingChallengeBanner({ userId }: { userId: string }) {
                 <span>{c.is1v1 ? "1v1" : "6v6"}</span>
                 {c.challengerCardName && (
                   <span>· leading with {c.challengerCardName}</span>
-                )}
-                {c.wager && c.wager.credits > 0 && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 border border-amber-500/40 font-medium">
-                    <Coins className="size-3" />
-                    {c.wager.credits} credit wager
-                  </span>
-                )}
-                {c.wager?.p1CardId && (
-                  <span className="text-amber-600">· card on the line</span>
                 )}
               </div>
             </div>
