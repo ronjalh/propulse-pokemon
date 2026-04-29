@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Swords } from "lucide-react";
+import { Swords, X } from "lucide-react";
 
+import { declineChallengeAction } from "@/lib/battle/actions";
 import { pendingChallengesFor } from "@/lib/battle/challenges";
 
 export async function PendingChallengeBanner({ userId }: { userId: string }) {
@@ -43,12 +44,25 @@ export async function PendingChallengeBanner({ userId }: { userId: string }) {
                 )}
               </div>
             </div>
-            <Link
-              href={`/battle/${c.battleId}`}
-              className="px-4 py-2 rounded-lg bg-rose-500 text-white font-bold hover:bg-rose-600 transition-colors shadow shrink-0"
-            >
-              Accept
-            </Link>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href={`/battle/${c.battleId}`}
+                className="px-4 py-2 rounded-lg bg-rose-500 text-white font-bold hover:bg-rose-600 transition-colors shadow"
+              >
+                Accept
+              </Link>
+              <form action={declineChallengeAction}>
+                <input type="hidden" name="battleId" value={c.battleId} />
+                <button
+                  type="submit"
+                  aria-label="Decline challenge"
+                  title="Decline this challenge"
+                  className="p-2 rounded-lg border border-muted-foreground/30 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="size-4" />
+                </button>
+              </form>
+            </div>
           </div>
         );
       })}

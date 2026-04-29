@@ -181,6 +181,54 @@ export async function joinBattleAction(formData: FormData): Promise<never> {
 }
 
 /**
+ * Decline an incoming challenge — only the invitee can call this, and only
+ * while the battle is in the `awaiting_opponent` phase. Marks the battle
+ * row as ended (no winner) and clears the Redis state.
+ */
+export async function declineChallengeAction(formData: FormData): Promise<never> {
+  const session = await auth();
+  if (!session?.user) redirect("/signin");
+  const userId = session.user.id;
+  const battleId = String(formData.get("battleId") ?? "");
+  if (!battleId) redirect("/");
+
+  // Mark the row as ended only when this user is genuinely the invitee on a
+  // pending challenge. Anything else is a no-op so we can safely silently
+  // redirect back without leaking state.
+  await db
+    .update(battles)
+    .set({
+      phase: "ended",
+      endedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(battles.id, battleId),
+        eq(battles.p2Id, userId),
+        eq(battles.phase, "awaiting_opponent"),
+      ),
+    );
+
+  // Clean up Redis state so the challenger's "waiting" page doesn't keep
+  // polling forever. Best-effort — if Redis is down we still got the DB.
+  if (isRedisConfigured()) {
+    try {
+      const { Redis } = await import("@upstash/redis");
+      const redis = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL!,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+      });
+      await redis.del(`battle:${battleId}`);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  revalidatePath("/");
+  redirect("/");
+}
+
+/**
  * Remove a battle from history. Participant-gated. Also clears any lingering
  * Redis state + intent keys so a stuck in-progress battle is fully cleaned up.
  */
