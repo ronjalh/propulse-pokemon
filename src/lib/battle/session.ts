@@ -5,6 +5,7 @@ import { resolveTurn, checkWinCondition } from "./engine";
 import {
   persistBattleCreate,
   persistBattleEnd,
+  persistBattlePhase,
   persistTurn,
 } from "./persist";
 import type { BattleSide, BattleState, Intent } from "./types";
@@ -219,6 +220,7 @@ export async function createPendingBattle(
     rngSeed: state.rngSeed,
     initialState: state,
     wager,
+    phase: "awaiting_opponent",
   });
   return initial;
 }
@@ -252,6 +254,10 @@ export async function joinPendingBattle(
   };
   const casRes = await cas(battleId, state.version, next);
   if (!casRes.ok) return { ok: false, reason: "race-lost" };
+
+  // Mirror Redis phase to Postgres so the pending-challenge banner stops
+  // showing this battle as awaiting.
+  await persistBattlePhase(battleId, "live");
 
   await publishBattleEvent(battleId, {
     kind: "turn-start",

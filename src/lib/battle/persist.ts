@@ -18,6 +18,7 @@ type PersistOnCreateArgs = {
   rngSeed: number;
   initialState: BattleState;
   wager?: BattleWager | null;
+  phase?: "awaiting_opponent" | "live";
 };
 
 /** Called when a battle is first created — inserts an empty history row. */
@@ -28,6 +29,7 @@ export async function persistBattleCreate({
   rngSeed,
   initialState,
   wager,
+  phase = "live",
 }: PersistOnCreateArgs): Promise<void> {
   await db
     .insert(battles)
@@ -40,8 +42,20 @@ export async function persistBattleCreate({
       turnLog: [] as TurnLogEntry[],
       turnsPlayed: 0,
       wager: wager ?? null,
+      phase,
     })
     .onConflictDoNothing();
+}
+
+/** Flip the battles row's phase (call when joining or ending). */
+export async function persistBattlePhase(
+  battleId: string,
+  phase: "awaiting_opponent" | "live" | "ended",
+): Promise<void> {
+  await db
+    .update(battles)
+    .set({ phase })
+    .where(sql`${battles.id} = ${battleId}`);
 }
 
 /** Called on every resolved turn — appends an entry to turn_log. */
@@ -78,6 +92,7 @@ export async function persistBattleEnd(
       endedAt: new Date(),
       winnerId: realWinner,
       finalState,
+      phase: "ended",
     })
     .where(sql`${battles.id} = ${battleId}`);
 

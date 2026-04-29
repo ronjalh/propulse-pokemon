@@ -350,10 +350,15 @@ export const battles = pgTable(
     turnsPlayed: integer("turns_played").notNull().default(0),
     /** null → no stakes, otherwise the locked-in wager */
     wager: jsonb("wager").$type<BattleWager>(),
+    /** Lifecycle: a pending challenge → live battle → ended. Mirrors what's
+     *  in Redis VersionedState.phase so the banner / inbox queries stay
+     *  Postgres-only. */
+    phase: text("phase").notNull().default("live"),
   },
   (t) => [
     index("battles_p1_idx").on(t.p1Id, t.createdAt),
     index("battles_p2_idx").on(t.p2Id, t.createdAt),
+    index("battles_p2_phase_idx").on(t.p2Id, t.phase),
   ],
 );
 
