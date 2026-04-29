@@ -36,6 +36,8 @@ export const users = pgTable("users", {
   lastNotificationsSeenAt: timestamp("last_notifications_seen_at", {
     withTimezone: true,
   }),
+  /** Elo-style PvP rating. Only changes from real PvP matches. Starts at 1000. */
+  rating: integer("rating").notNull().default(1000),
 });
 
 export const accounts = pgTable(

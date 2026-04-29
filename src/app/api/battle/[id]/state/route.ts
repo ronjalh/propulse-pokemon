@@ -62,6 +62,7 @@ export async function GET(
         confusionTurnsLeft: c.volatile.confusionTurnsLeft,
         sleepTurnsLeft: c.volatile.sleepTurnsLeft,
         ppLeft: c.moves.map((m) => m.ppLeft),
+        currentEnergy: c.currentEnergy ?? 0,
       })),
     })),
     recentTurns,

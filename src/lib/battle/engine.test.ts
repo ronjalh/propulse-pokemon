@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Move } from "@/lib/db/schema";
-import { applyStatus, checkWinCondition, computeDamage, resolveTurn } from "./engine";
+import { applyStatus, checkWinCondition, computeDamage, resolveTurn, MAX_ENERGY } from "./engine";
 import { makeRng } from "./rng";
 import type { BattleCard, BattleState, Intent } from "./types";
 
@@ -40,6 +40,7 @@ function mkCard(overrides: Partial<BattleCard> & { cardId: string }): BattleCard
     moves: overrides.moves ?? [{ move: mkMove({ id: "tackle" }), ppLeft: 16 }],
     status: overrides.status ?? null,
     volatile: overrides.volatile ?? { confusionTurnsLeft: 0, sleepTurnsLeft: 0 },
+    currentEnergy: overrides.currentEnergy ?? MAX_ENERGY,
   };
 }
 

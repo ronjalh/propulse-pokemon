@@ -8,14 +8,15 @@ import { CreditsBadge } from "@/components/layout/CreditsBadge";
 import { leaderboardFor, type LeaderboardEntry } from "@/lib/battle/leaderboard";
 
 type PageProps = {
-  searchParams: Promise<{ mode?: "1v1" | "6v6" }>;
+  searchParams: Promise<{ mode?: "1v1" | "6v6" | "rating" }>;
 };
 
 export default async function LeaderboardPage({ searchParams }: PageProps) {
   const session = await auth();
   if (!session?.user) redirect("/signin");
-  const { mode = "1v1" } = await searchParams;
-  const safeMode: "1v1" | "6v6" = mode === "6v6" ? "6v6" : "1v1";
+  const { mode = "rating" } = await searchParams;
+  const safeMode: "1v1" | "6v6" | "rating" =
+    mode === "6v6" ? "6v6" : mode === "1v1" ? "1v1" : "rating";
 
   const entries = await leaderboardFor(safeMode);
 
@@ -32,21 +33,23 @@ export default async function LeaderboardPage({ searchParams }: PageProps) {
         <Trophy className="text-amber-500" /> Leaderboard
       </h1>
 
-      <div className="flex gap-2 text-sm">
+      <div className="flex gap-2 text-sm flex-wrap">
+        <ModeTab href="/leaderboard?mode=rating" active={safeMode === "rating"}>
+          Rating (Elo)
+        </ModeTab>
         <ModeTab href="/leaderboard?mode=1v1" active={safeMode === "1v1"}>
-          1v1
+          1v1 wins
         </ModeTab>
         <ModeTab href="/leaderboard?mode=6v6" active={safeMode === "6v6"}>
-          6v6
+          6v6 wins
         </ModeTab>
       </div>
 
       {entries.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-          No completed {safeMode} matches yet. Be the first —{" "}
-          <Link href="/battle/new" className="underline">
-            challenge someone
-          </Link>
+          No completed{" "}
+          {safeMode === "rating" ? "rated" : safeMode} matches yet. Be the
+          first — <Link href="/battle/new" className="underline">challenge someone</Link>
           .
         </div>
       ) : (
@@ -57,6 +60,7 @@ export default async function LeaderboardPage({ searchParams }: PageProps) {
               rank={i + 1}
               entry={e}
               isMe={e.userId === session.user.id}
+              showRating={safeMode === "rating"}
             />
           ))}
         </ol>
@@ -64,7 +68,8 @@ export default async function LeaderboardPage({ searchParams }: PageProps) {
 
       <p className="text-xs text-muted-foreground">
         Counts only finished battles between two real Propulse members. Solo
-        mirror matches and unfinished battles are excluded.
+        mirror matches and unfinished battles are excluded. Rating uses Elo
+        (start at 1000, ±16 per even match) and updates only on real PvP wins.
       </p>
     </main>
   );
@@ -97,10 +102,12 @@ function Row({
   rank,
   entry,
   isMe,
+  showRating,
 }: {
   rank: number;
   entry: LeaderboardEntry;
   isMe: boolean;
+  showRating: boolean;
 }) {
   const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : null;
   return (
@@ -133,14 +140,25 @@ function Row({
           {entry.email}
         </div>
       </div>
-      <div className="text-right shrink-0">
-        <div className="font-bold text-lg tabular-nums text-emerald-500">
-          {entry.wins}W
+      {showRating ? (
+        <div className="text-right shrink-0">
+          <div className="font-bold text-lg tabular-nums text-amber-500">
+            {entry.rating}
+          </div>
+          <div className="text-xs text-muted-foreground tabular-nums">
+            {entry.wins}W · {entry.losses}L
+          </div>
         </div>
-        <div className="text-xs text-muted-foreground tabular-nums">
-          {entry.losses}L · {entry.winRate}%
+      ) : (
+        <div className="text-right shrink-0">
+          <div className="font-bold text-lg tabular-nums text-emerald-500">
+            {entry.wins}W
+          </div>
+          <div className="text-xs text-muted-foreground tabular-nums">
+            {entry.losses}L · {entry.winRate}%
+          </div>
         </div>
-      </div>
+      )}
     </li>
   );
 }

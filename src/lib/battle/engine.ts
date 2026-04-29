@@ -12,6 +12,44 @@ import { makeRng, type Rng } from "./rng";
 
 const CRIT_CHANCE = 1 / 24;
 const TM_DAMAGE_MULTIPLIER = 0.85;
+/** Global damping on damage rolls. Tuned 1.0 → 0.6 so 100+ BP moves
+ *  no longer one-shot cards. Relative power between moves preserved. */
+const GLOBAL_DAMAGE_MULT = 0.6;
+
+/** Max energy a card can bank. */
+export const MAX_ENERGY = 6;
+/** Energy gained by the active card each end-of-turn. */
+export const ENERGY_PER_TURN = 1;
+
+/**
+ * Cost of using a move, derived from its power. Encourages building up
+ * before using big finishers — you can't spam Stack Overflow turn 1.
+ *   ≤50 BP  → 0 ⚡  (free)
+ *   51–79   → 1 ⚡
+ *   80–99   → 2 ⚡
+ *   100–129 → 3 ⚡
+ *   130+    → 4 ⚡
+ *  Status moves: 1 ⚡ if they inflict a major status, 0 otherwise.
+ */
+export function costForMove(move: Move): number {
+  if (move.category === "status") {
+    if (
+      move.effect &&
+      ["poison", "burn", "paralysis", "sleep", "freeze", "confusion"].includes(
+        move.effect,
+      )
+    ) {
+      return 1;
+    }
+    return 0;
+  }
+  const p = move.power ?? 0;
+  if (p <= 50) return 0;
+  if (p <= 79) return 1;
+  if (p <= 99) return 2;
+  if (p <= 129) return 3;
+  return 4;
+}
 
 export function computeDamage(
   attacker: BattleCard,
@@ -52,7 +90,16 @@ export function computeDamage(
 
   const damage = Math.max(
     1,
-    Math.floor(base * stabMult * effectiveness * critMult * burnMult * tmMult * randomMult),
+    Math.floor(
+      base *
+        stabMult *
+        effectiveness *
+        critMult *
+        burnMult *
+        tmMult *
+        randomMult *
+        GLOBAL_DAMAGE_MULT,
+    ),
   );
 
   return { damage, crit, effectiveness, stab, isTm };
@@ -220,6 +267,20 @@ function executeMoveIntent(
     });
     return;
   }
+  // Energy gating — big-BP moves require build-up turns.
+  const cost = costForMove(slot.move);
+  const have = attacker.currentEnergy ?? 0;
+  if (cost > have) {
+    events.push({
+      kind: "no-effect",
+      actorId: attacker.cardId,
+      moveId: slot.move.id,
+      moveName: slot.move.name,
+      reason: "no-energy",
+    });
+    return;
+  }
+  attacker.currentEnergy = have - cost;
   slot.ppLeft -= 1;
   const move = slot.move;
 
@@ -373,6 +434,17 @@ export function resolveTurn(
   }
 
   endOfTurnStatus(next, events);
+
+  // End-of-turn energy regen for both sides' active card.
+  for (const side of next.sides) {
+    const c = active(side);
+    if (c.currentHp <= 0) continue;
+    c.currentEnergy = Math.min(
+      MAX_ENERGY,
+      (c.currentEnergy ?? 0) + ENERGY_PER_TURN,
+    );
+  }
+
   const winner = checkWinCondition(next);
   if (winner) {
     next.winnerId = winner;

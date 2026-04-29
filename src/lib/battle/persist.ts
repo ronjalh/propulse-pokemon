@@ -1,13 +1,15 @@
 import "server-only";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
   battles,
+  users,
   type BattleWager,
   type TurnLogEntry,
 } from "@/lib/db/schema";
 import { earn, logCardEvent } from "@/lib/economy/credits";
+import { eloDelta } from "./elo";
 import { settleWager } from "./wager";
 import type { BattleEvent, BattleState } from "./types";
 
@@ -111,8 +113,9 @@ export async function persistBattleEnd(
   // Wager UI is gone but old battles in the DB may still carry one.
   await settleWager(battleId, finalState.winnerId);
 
-  // PvP win reward — only on the first transition to ended, only when both
-  // sides are real users (no mirror), only when there's a real winner.
+  // PvP win reward + Elo update — only on the first transition to ended,
+  // only when both sides are real users (no mirror), only when there's a
+  // real winner.
   if (
     prior &&
     prior.phase !== "ended" &&
@@ -128,5 +131,25 @@ export async function persistBattleEnd(
       reason: `pvp-win:${battleId}`,
       relatedBattleId: battleId,
     });
+
+    // Elo: read both ratings, compute delta, write back.
+    const loserId = realWinner === prior.p1Id ? prior.p2Id : prior.p1Id;
+    const ratingRows = await db
+      .select({ id: users.id, rating: users.rating })
+      .from(users)
+      .where(sql`${users.id} IN (${realWinner}, ${loserId})`);
+    const winnerRow = ratingRows.find((r) => r.id === realWinner);
+    const loserRow = ratingRows.find((r) => r.id === loserId);
+    if (winnerRow && loserRow) {
+      const delta = eloDelta(winnerRow.rating, loserRow.rating);
+      await db
+        .update(users)
+        .set({ rating: winnerRow.rating + delta.winner })
+        .where(eq(users.id, realWinner));
+      await db
+        .update(users)
+        .set({ rating: Math.max(0, loserRow.rating + delta.loser) })
+        .where(eq(users.id, loserId));
+    }
   }
 }

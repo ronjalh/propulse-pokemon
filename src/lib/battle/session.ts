@@ -27,6 +27,7 @@ function slimStateFor(state: BattleState): SlimTurnDelta {
         confusionTurnsLeft: c.volatile.confusionTurnsLeft,
         sleepTurnsLeft: c.volatile.sleepTurnsLeft,
         ppLeft: c.moves.map((m) => m.ppLeft),
+        currentEnergy: c.currentEnergy ?? 0,
       })),
     })) as SlimTurnDelta["sides"],
   };
