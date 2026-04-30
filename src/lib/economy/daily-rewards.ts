@@ -7,10 +7,11 @@ import { generateIVs, rollShiny } from "@/lib/cards/stats";
 import { earn, logCardEvent } from "./credits";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 7-day daily-reward cycle
-//   Day 1: 50 credits     Day 5: 90 credits
-//   Day 2: 60 credits     Day 6: 100 credits
-//   Day 3: 70 credits     Day 7: random Propulse card ✨
+// 7-day daily-reward cycle. Day 1 starts at 20 credits, +20 per day, so
+// the streak rewards keep getting better — day 7 is a Propulse card.
+//   Day 1: 20 credits     Day 5: 100 credits
+//   Day 2: 40 credits     Day 6: 120 credits
+//   Day 3: 60 credits     Day 7: random Propulse card ✨
 //   Day 4: 80 credits
 //
 // Streak advances if you claim within 20–48h of the previous claim.
@@ -24,11 +25,11 @@ export type DailyReward =
 
 export const DAILY_REWARDS: DailyReward[] = [
   { day: 1, kind: "coins", amount: 20 },
-  { day: 2, kind: "coins", amount: 25 },
-  { day: 3, kind: "coins", amount: 30 },
-  { day: 4, kind: "coins", amount: 40 },
-  { day: 5, kind: "coins", amount: 50 },
-  { day: 6, kind: "coins", amount: 60 },
+  { day: 2, kind: "coins", amount: 40 },
+  { day: 3, kind: "coins", amount: 60 },
+  { day: 4, kind: "coins", amount: 80 },
+  { day: 5, kind: "coins", amount: 100 },
+  { day: 6, kind: "coins", amount: 120 },
   { day: 7, kind: "card" },
 ];
 
