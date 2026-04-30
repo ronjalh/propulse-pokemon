@@ -289,6 +289,7 @@ function CardSlot(props: {
                 id: props.card.cardId,
                 isShiny: props.card.isShiny,
                 ivs: props.card.ivs,
+                level: props.card.level,
               }}
               person={{
                 name: props.card.personName,

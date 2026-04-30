@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 type Size = "sm" | "md" | "lg";
 
 type Props = {
-  card: Pick<Card, "id" | "isShiny" | "ivs"> & { level?: number };
+  card: Pick<Card, "id" | "isShiny" | "ivs"> & { level: number };
   person: Pick<
     Person,
     | "name"
@@ -49,7 +49,7 @@ function StatRow({ label, value, max = 200 }: { label: string; value: number; ma
 export function PropulseCard({ card, person, size = "md" }: Props) {
   const primary = TYPE_COLORS[person.primaryType];
   const secondary = person.secondaryType ? TYPE_COLORS[person.secondaryType] : primary;
-  const cardLevel = card.level ?? 1;
+  const cardLevel = card.level;
   const final = computeFinalStats(
     person.baseStats as BaseStats,
     card.ivs as IVs,

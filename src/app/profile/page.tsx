@@ -87,6 +87,7 @@ export default async function ProfilePage() {
                   spDefense: 15,
                   speed: 15,
                 },
+                level: 1,
               }}
               person={propulsePerson}
             />

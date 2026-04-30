@@ -145,7 +145,12 @@ function ReplayCard({
         <div className="shrink-0">
           <PropulseCard
             size="sm"
-            card={{ id: meta.cardId, isShiny: meta.isShiny, ivs: meta.ivs }}
+            card={{
+              id: meta.cardId,
+              isShiny: meta.isShiny,
+              ivs: meta.ivs,
+              level: meta.level,
+            }}
             person={{
               name: meta.personName,
               title: meta.title,

@@ -26,6 +26,7 @@ export type OwnedCard = {
   ivs: IVs;
   isShiny: boolean;
   imageUrl: string;
+  level: number;
 };
 
 export async function ownedCardsForUser(userId: string): Promise<OwnedCard[]> {
@@ -44,6 +45,7 @@ export async function ownedCardsForUser(userId: string): Promise<OwnedCard[]> {
       ivs: cards.ivs,
       isShiny: cards.isShiny,
       imageUrl: persons.imageUrl,
+      level: cards.level,
     })
     .from(cards)
     .innerJoin(persons, eq(cards.personId, persons.id))

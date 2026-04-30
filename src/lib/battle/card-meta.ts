@@ -14,6 +14,9 @@ export type CardMeta = {
   cardId: string;
   isShiny: boolean;
   ivs: IVs;
+  /** Card progression level (1..5), as stored in the cards table. Distinct
+   *  from BattleCard.level which is the Pokémon-formula battle level (50..90). */
+  level: number;
   personName: string;
   title: string;
   imageUrl: string;
@@ -48,6 +51,7 @@ export async function fetchCardMeta(
       cardId: cards.id,
       isShiny: cards.isShiny,
       ivs: cards.ivs,
+      level: cards.level,
       personName: persons.name,
       title: persons.title,
       imageUrl: persons.imageUrl,

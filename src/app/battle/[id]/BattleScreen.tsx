@@ -747,7 +747,12 @@ function CardPanel({
         <div className="shrink-0">
           <PropulseCard
             size="sm"
-            card={{ id: meta.cardId, isShiny: meta.isShiny, ivs: meta.ivs }}
+            card={{
+              id: meta.cardId,
+              isShiny: meta.isShiny,
+              ivs: meta.ivs,
+              level: meta.level,
+            }}
             person={{
               name: meta.personName,
               title: meta.title,
@@ -782,7 +787,8 @@ function CardPanel({
         </div>
         <div className="font-semibold truncate">{card.personName}</div>
         <div className="text-xs text-muted-foreground">
-          {card.types.join(" / ")} · Lv {card.level}
+          {card.types.join(" / ")}
+          {meta ? ` · Lv ${meta.level}` : ""}
           {card.status ? ` · ${card.status}` : ""}
         </div>
         <div className="h-2 rounded bg-muted overflow-hidden">
