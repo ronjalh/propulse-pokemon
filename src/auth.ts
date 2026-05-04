@@ -63,14 +63,18 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       const email = (user?.email ?? "").toLowerCase();
       if (!email.endsWith(PROPULSE_DOMAIN)) return false;
 
-      // Check if user is banned
+      // Check if user is banned (gracefully handle if column doesn't exist yet)
       if (user?.id) {
-        const [dbUser] = await db
-          .select({ banned: users.banned })
-          .from(users)
-          .where(eq(users.id, user.id))
-          .limit(1);
-        if (dbUser?.banned) return false;
+        try {
+          const [dbUser] = await db
+            .select({ banned: users.banned })
+            .from(users)
+            .where(eq(users.id, user.id))
+            .limit(1);
+          if (dbUser?.banned) return false;
+        } catch {
+          // Ignore errors (e.g., column doesn't exist yet during migration)
+        }
       }
 
       // Auto-promote admins on sign-in if their email is in ADMIN_EMAILS.
