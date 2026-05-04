@@ -63,6 +63,16 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       const email = (user?.email ?? "").toLowerCase();
       if (!email.endsWith(PROPULSE_DOMAIN)) return false;
 
+      // Check if user is banned
+      if (user?.id) {
+        const [dbUser] = await db
+          .select({ banned: users.banned })
+          .from(users)
+          .where(eq(users.id, user.id))
+          .limit(1);
+        if (dbUser?.banned) return false;
+      }
+
       // Auto-promote admins on sign-in if their email is in ADMIN_EMAILS.
       // Runs after the Drizzle adapter has upserted the user row.
       if (user?.id && adminEmailSet().has(email)) {

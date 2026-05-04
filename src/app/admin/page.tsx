@@ -1,23 +1,23 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { count, desc, eq, isNotNull, or, sql } from "drizzle-orm";
-import { ShieldAlert, ShieldCheck, Shield } from "lucide-react";
+import { ShieldAlert, ShieldCheck, Shield, Snowflake } from "lucide-react";
 
 import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { CreditsBadge } from "@/components/layout/CreditsBadge";
 import { db } from "@/lib/db/client";
 import { battles, cards, transactionLog, users } from "@/lib/db/schema";
-import { grantCreditsAction, toggleAdminAction } from "./actions";
+import { grantCreditsAction, toggleAdminAction, toggleBanAction, removeCreditsAction } from "./actions";
 
 type PageProps = {
-  searchParams: Promise<{ granted?: string; error?: string }>;
+  searchParams: Promise<{ granted?: string; removed?: string; error?: string }>;
 };
 
 export default async function AdminPage({ searchParams }: PageProps) {
   const session = await auth();
   if (!session?.user) redirect("/signin");
-  const { granted, error } = await searchParams;
+  const { granted, removed, error } = await searchParams;
 
   // Re-check isAdmin from DB (session flag could be stale).
   const [me] = await db
@@ -51,6 +51,7 @@ export default async function AdminPage({ searchParams }: PageProps) {
       image: users.image,
       credits: users.credits,
       isAdmin: users.isAdmin,
+      banned: users.banned,
       createdAt: users.createdAt,
       lastDailyRewardAt: users.lastDailyRewardAt,
       dailyStreakDay: users.dailyStreakDay,
@@ -105,6 +106,11 @@ export default async function AdminPage({ searchParams }: PageProps) {
           Granted {granted} credits successfully.
         </div>
       )}
+      {removed && (
+        <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm">
+          Removed {removed} credits successfully.
+        </div>
+      )}
       {error && (
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
           {friendlyError(error)}
@@ -146,6 +152,41 @@ export default async function AdminPage({ searchParams }: PageProps) {
         <Button type="submit">Grant</Button>
       </form>
 
+      <form action={removeCreditsAction} className="rounded-lg border p-4 space-y-3">
+        <div className="font-semibold">Remove credits</div>
+        <label className="block text-sm">
+          Target Propulse email
+          <input
+            name="email"
+            type="email"
+            required
+            placeholder="navn@propulsentnu.no"
+            className="mt-1 w-full rounded border bg-background p-2 text-sm"
+          />
+        </label>
+        <label className="block text-sm">
+          Amount
+          <input
+            name="amount"
+            type="number"
+            min={1}
+            step={10}
+            required
+            className="mt-1 w-full rounded border bg-background p-2 text-sm"
+          />
+        </label>
+        <label className="block text-sm">
+          Reason (logged in transaction_log)
+          <input
+            name="reason"
+            maxLength={200}
+            placeholder="cheating, refund, test removal…"
+            className="mt-1 w-full rounded border bg-background p-2 text-sm"
+          />
+        </label>
+        <Button type="submit" variant="destructive">Remove</Button>
+      </form>
+
       {/* Users panel */}
       <div>
         <div className="flex items-center justify-between mb-2">
@@ -183,6 +224,11 @@ export default async function AdminPage({ searchParams }: PageProps) {
                         <ShieldCheck className="size-3" /> admin
                       </span>
                     )}
+                    {u.banned && (
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-700 border border-blue-500/40">
+                        <Snowflake className="size-3" /> frozen
+                      </span>
+                    )}
                   </div>
                   <div className="text-xs text-muted-foreground truncate">
                     {u.email}
@@ -205,22 +251,40 @@ export default async function AdminPage({ searchParams }: PageProps) {
                 </div>
                 {/* Admin toggle — can't demote yourself */}
                 {u.id !== session.user.id && (
-                  <form action={toggleAdminAction}>
-                    <input type="hidden" name="userId" value={u.id} />
-                    <button
-                      type="submit"
-                      title={
-                        u.isAdmin ? "Demote from admin" : "Promote to admin"
-                      }
-                      className={`p-1.5 rounded border text-xs ${
-                        u.isAdmin
-                          ? "text-rose-500 border-rose-500/40 hover:bg-rose-500/10"
-                          : "text-muted-foreground hover:bg-accent"
-                      }`}
-                    >
-                      <Shield className="size-3.5" />
-                    </button>
-                  </form>
+                  <div className="flex gap-1">
+                    <form action={toggleAdminAction}>
+                      <input type="hidden" name="userId" value={u.id} />
+                      <button
+                        type="submit"
+                        title={
+                          u.isAdmin ? "Demote from admin" : "Promote to admin"
+                        }
+                        className={`p-1.5 rounded border text-xs ${
+                          u.isAdmin
+                            ? "text-rose-500 border-rose-500/40 hover:bg-rose-500/10"
+                            : "text-muted-foreground hover:bg-accent"
+                        }`}
+                      >
+                        <Shield className="size-3.5" />
+                      </button>
+                    </form>
+                    <form action={toggleBanAction}>
+                      <input type="hidden" name="userId" value={u.id} />
+                      <button
+                        type="submit"
+                        title={
+                          u.banned ? "Unfreeze access" : "Freeze access"
+                        }
+                        className={`p-1.5 rounded border text-xs ${
+                          u.banned
+                            ? "text-blue-500 border-blue-500/40 hover:bg-blue-500/10"
+                            : "text-muted-foreground hover:bg-accent"
+                        }`}
+                      >
+                        <Snowflake className="size-3.5" />
+                      </button>
+                    </form>
+                  </div>
                 )}
               </div>
             );
@@ -283,5 +347,7 @@ function friendlyError(code: string): string {
   if (code === "missing-fields") return "Email and amount are required.";
   if (code === "no-such-user") return "No user with that email.";
   if (code === "bad-amount") return "Amount must be a positive integer.";
+  if (code === "insufficient-credits") return "User doesn't have enough credits.";
+  if (code === "cannot-self-ban") return "You cannot ban yourself.";
   return `Error: ${code}`;
 }
