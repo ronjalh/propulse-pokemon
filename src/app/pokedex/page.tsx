@@ -83,6 +83,7 @@ export default async function PokedexPage() {
                     "object-cover",
                     !isOwned && "brightness-0",
                   )}
+                  unoptimized
                 />
                 {isOwned && o.count > 1 && (
                   <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[0.6rem] px-1.5 py-0.5 rounded">

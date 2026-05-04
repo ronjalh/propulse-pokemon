@@ -178,6 +178,7 @@ function MiniCard({ card }: { card: TradeCardDetail | null }) {
         width={32}
         height={32}
         className="rounded-full size-8 object-cover shrink-0"
+        unoptimized
       />
       <div className="min-w-0">
         <div className="text-xs font-medium truncate flex items-center gap-1">

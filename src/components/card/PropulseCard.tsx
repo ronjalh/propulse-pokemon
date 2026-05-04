@@ -136,6 +136,7 @@ export function PropulseCard({ card, person, size = "md" }: Props) {
           fill
           sizes="240px"
           className="object-cover"
+          unoptimized
         />
       </div>
 

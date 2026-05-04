@@ -121,6 +121,7 @@ function PreviewThumb({ card }: { card: TeamPreviewCard }) {
           width={64}
           height={64}
           className="object-cover size-full"
+          unoptimized
         />
       </div>
       <div

@@ -71,6 +71,7 @@ export default async function HomePage() {
               width={40}
               height={40}
               className="rounded-full ring-2 ring-sky-500/40"
+              unoptimized
             />
           )}
           <div>

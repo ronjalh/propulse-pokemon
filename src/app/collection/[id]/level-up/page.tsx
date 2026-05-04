@@ -130,6 +130,7 @@ export default async function LevelUpPage({ params, searchParams }: PageProps) {
                   width={32}
                   height={32}
                   className="rounded-full size-8 object-cover shrink-0"
+                  unoptimized
                 />
                 <div className="min-w-0 text-left">
                   <div className="text-xs font-medium truncate">

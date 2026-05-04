@@ -126,6 +126,7 @@ function Row({
           width={40}
           height={40}
           className="rounded-full size-10 object-cover shrink-0"
+          unoptimized
         />
       ) : (
         <div className="size-10 rounded-full bg-muted flex items-center justify-center font-bold shrink-0">

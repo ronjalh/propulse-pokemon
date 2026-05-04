@@ -25,6 +25,7 @@ export async function PendingChallengeBanner({ userId }: { userId: string }) {
                 width={48}
                 height={48}
                 className="rounded-full ring-2 ring-rose-400 shrink-0"
+                unoptimized
               />
             ) : (
               <div className="size-12 rounded-full bg-rose-500/30 ring-2 ring-rose-400 flex items-center justify-center font-bold shrink-0">

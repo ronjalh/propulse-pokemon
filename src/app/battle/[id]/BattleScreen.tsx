@@ -867,6 +867,7 @@ function OpponentAvatar({ info }: { info: OpponentInfo }) {
         width={40}
         height={40}
         className="rounded-full ring-2 ring-rose-400/60 shrink-0"
+        unoptimized
       />
     );
   }
